@@ -1,0 +1,43 @@
+# AttendFX
+
+An MCP server (plus a small admin web page) that lets an AI assistant answer campus course and attendance questions, seeing only what the caller is allowed to see. Privacy is enforced in the database with row-level security.
+
+- Design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Source guide: `Campus_MCP_Guide_Free_and_Paid.pdf`
+
+## Local setup (Windows, PowerShell)
+
+Requirements: Docker Desktop, [uv](https://docs.astral.sh/uv/), Python 3.12, Node 24 (frontend, later).
+
+```powershell
+Copy-Item .env.example .env          # dev-only values
+docker compose up -d                 # Postgres 17
+cd backend
+uv sync
+uv run alembic upgrade head          # tables, roles, RLS
+uv run python -m app.worker seed     # fake data (Faker), idempotent
+uv run pytest                        # unit + permission tests
+uv run uvicorn app.main:app --reload # http://localhost:8000/healthz
+```
+
+Seeded accounts use `@attendfx.test` emails (`admin@`, `teacher1@`..`teacher5@`, `student01@`..`student40@`) and the password in `AFX_SEED_PASSWORD`. All data is fake.
+
+Run `psql` without installing it locally:
+
+```powershell
+docker compose exec db psql -U afx_owner -d attendfx
+```
+
+## Layout
+
+```
+backend/    FastAPI app, MCP server (later), migrations, tests
+frontend/   React admin page (phase 5)
+evals/      the 60-question test
+infra/      deployment files
+docs/       architecture and decisions
+```
+
+## Status
+
+Phase 0 done: schema, roles, RLS, seed data, permission tests, CI skeleton. Next: thin slice (`my_attendance` end to end).
