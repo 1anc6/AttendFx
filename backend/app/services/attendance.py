@@ -1,32 +1,22 @@
-"""Attendance business rules: who may ask about whom, validation, and summarising."""
+"""Student-facing attendance tools: my_attendance and attendance_rule."""
 
-import re
 from datetime import date
 from typing import Any
 from uuid import UUID
 
 from app.db.pools import Identity, rls_connection
 from app.repos import attendance_repo
-
-COURSE_CODE = re.compile(r"^[A-Z]{2,4}[0-9]{3}$")
-MAX_SPAN_DAYS = 366
-
-# One message for "not allowed" and "does not exist", so callers cannot probe for records.
-NO_RECORDS = "No attendance records were found for that request."
-
-
-class UserError(Exception):
-    """A problem with the request itself. The message is safe to show to the caller."""
-
-
-def _validate(course_code: str | None, from_date: date | None, to_date: date | None) -> None:
-    if course_code is not None and not COURSE_CODE.match(course_code):
-        raise UserError("course_code must look like CSE301: 2-4 capital letters then 3 digits.")
-    if from_date and to_date:
-        if from_date > to_date:
-            raise UserError("from_date must be on or before to_date.")
-        if (to_date - from_date).days > MAX_SPAN_DAYS:
-            raise UserError(f"The date range can be at most {MAX_SPAN_DAYS} days.")
+from app.services.common import (
+    NO_RECORDS,
+    PERCENT_RULE,
+    STATUSES,
+    UserError,
+    attended_percent,
+    period,
+    validate_course_code,
+    validate_dates,
+    zero_counts,
+)
 
 
 def _parse_student_id(student_id: str | None) -> UUID | None:
@@ -38,10 +28,6 @@ def _parse_student_id(student_id: str | None) -> UUID | None:
         raise UserError("student_id must be a valid id.") from None
 
 
-def _percent(attended: int, counted: int) -> float | None:
-    return round(100 * attended / counted, 1) if counted else None
-
-
 def my_attendance(
     identity: Identity,
     *,
@@ -50,7 +36,8 @@ def my_attendance(
     from_date: date | None = None,
     to_date: date | None = None,
 ) -> dict[str, Any]:
-    _validate(course_code, from_date, to_date)
+    validate_course_code(course_code)
+    validate_dates(from_date, to_date)
     requested = _parse_student_id(student_id)
 
     if identity.role == "student":
@@ -76,46 +63,43 @@ def my_attendance(
 
     courses: dict[str, dict[str, Any]] = {}
     for code, title, status, n in rows:
-        entry = courses.setdefault(
-            code,
-            {
-                "course_code": code,
-                "title": title,
-                "present": 0,
-                "absent": 0,
-                "late": 0,
-                "excused": 0,
-            },
-        )
+        entry = courses.setdefault(code, {"course_code": code, "title": title, **zero_counts()})
         entry[status] = n
 
-    totals = {"present": 0, "absent": 0, "late": 0, "excused": 0}
+    totals = zero_counts()
     for entry in courses.values():
-        entry["total_sessions"] = sum(entry[s] for s in totals)
-        entry["attended_percent"] = _percent(
-            entry["present"] + entry["late"], entry["total_sessions"] - entry["excused"]
-        )
-        for s in totals:
+        entry["total_sessions"] = sum(entry[s] for s in STATUSES)
+        entry["attended_percent"] = attended_percent(entry)
+        for s in STATUSES:
             totals[s] += entry[s]
-    total_sessions = sum(totals.values())
 
     return {
         "found": True,
         "student_id": str(target),
-        "period": {
-            "from_date": from_date.isoformat() if from_date else None,
-            "to_date": to_date.isoformat() if to_date else None,
-            "timezone": "Asia/Kolkata",
-        },
+        "period": period(from_date, to_date),
         "courses": list(courses.values()),
         "overall": {
             **totals,
-            "total_sessions": total_sessions,
-            "attended_percent": _percent(
-                totals["present"] + totals["late"], total_sessions - totals["excused"]
-            ),
+            "total_sessions": sum(totals.values()),
+            "attended_percent": attended_percent(totals),
         },
-        "how_percent_is_calculated": (
-            "attended_percent = (present + late) / (all sessions - excused) * 100"
-        ),
+        "how_percent_is_calculated": PERCENT_RULE,
+    }
+
+
+def attendance_rule(identity: Identity) -> dict[str, Any]:
+    with rls_connection(identity) as conn:
+        minimum = attendance_repo.min_attendance_percent(conn)
+    if minimum is None:
+        return {
+            "configured": False,
+            "message": "The minimum attendance rule has not been set yet.",
+            "how_percent_is_calculated": PERCENT_RULE,
+        }
+    return {
+        "configured": True,
+        "minimum_percent": minimum,
+        "rule": f"Students must attend at least {minimum:g}% of classes in each course.",
+        "how_percent_is_calculated": PERCENT_RULE,
+        "note": "Late counts as attended. Excused sessions are left out of the calculation.",
     }

@@ -1,63 +1,17 @@
 """End to end: HTTP -> access key -> RLS identity -> my_attendance, over the real MCP endpoint."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 
-import psycopg
 import pytest
-from fastapi.testclient import TestClient
 
-from app.auth.keys import generate_key
-from app.main import app
-from app.repos import auth_repo
-from app.worker.seed import uid
-
-HEADERS = {"Accept": "application/json, text/event-stream", "Content-Type": "application/json"}
-STUDENT, OTHER_STUDENT = uid("user", "student1"), uid("user", "student2")
-TEACHER, ADMIN = uid("user", "teacher1"), uid("user", "admin")
-
-
-@pytest.fixture(scope="module")
-def client(require_db):
-    with TestClient(app) as c:
-        yield c
-
-
-@pytest.fixture(scope="module")
-def make_key(require_db, settings):
-    """Mint keys directly (like an admin would) and delete them, and their audit rows, after."""
-    created = []
-
-    def _make(user_id, *, expires_in=timedelta(days=1)):
-        full, prefix, secret_hash = generate_key()
-        key_id = auth_repo.create_key(
-            user_id, "pytest-key", prefix, secret_hash, datetime.now(UTC) + expires_in
-        )
-        created.append(key_id)
-        return full
-
-    yield _make
-
-    owner_url = settings.owner_database_url.replace("postgresql+psycopg://", "postgresql://")
-    with psycopg.connect(owner_url) as conn:
-        conn.execute("DELETE FROM audit_log WHERE key_id = ANY(%s)", (created,))
-        conn.execute("DELETE FROM api_keys WHERE id = ANY(%s)", (created,))
-
-
-def call(client, key, name, arguments=None, *, method="tools/call"):
-    headers = dict(HEADERS)
-    if key:
-        headers["Authorization"] = f"Bearer {key}"
-    body = {"jsonrpc": "2.0", "id": 1, "method": method}
-    if method == "tools/call":
-        body["params"] = {"name": name, "arguments": arguments or {}}
-    return client.post("/mcp", json=body, headers=headers)
-
-
-def tool_result(response):
-    assert response.status_code == 200, response.text
-    result = response.json()["result"]
-    return result["isError"], result.get("structuredContent"), result["content"][0]["text"]
-
+from tests.integration.mcp_helpers import (
+    ADMIN,
+    OTHER_STUDENT,
+    STUDENT,
+    TEACHER,
+    call,
+    tool_result,
+)
 
 # ---------------------------------------------------------------- authentication
 
@@ -76,20 +30,13 @@ def test_expired_key_is_rejected(client, make_key):
     assert call(client, key, "my_attendance").status_code == 401
 
 
-def test_revoked_key_stops_working_immediately(client, make_key, settings):
+def test_revoked_key_stops_working_immediately(client, make_key, owner):
     key = make_key(STUDENT)
     assert call(client, key, "my_attendance").status_code == 200
     prefix = key.split("_")[1]
-    owner_url = settings.owner_database_url.replace("postgresql+psycopg://", "postgresql://")
-    with psycopg.connect(owner_url) as conn:
-        conn.execute("UPDATE api_keys SET revoked_at = now() WHERE prefix = %s", (prefix,))
+    owner.execute("UPDATE api_keys SET revoked_at = now() WHERE prefix = %s", (prefix,))
+    owner.commit()
     assert call(client, key, "my_attendance").status_code == 401
-
-
-def test_tool_list(client, make_key):
-    response = call(client, make_key(STUDENT), None, method="tools/list")
-    names = [t["name"] for t in response.json()["result"]["tools"]]
-    assert names == ["my_attendance"]
 
 
 # ---------------------------------------------------------------- the privacy rule
@@ -200,17 +147,15 @@ def test_date_range_narrows_results(client, make_key):
     assert narrow["overall"]["total_sessions"] < full["overall"]["total_sessions"]
 
 
-def test_calls_are_audited_without_raw_arguments(client, make_key, settings):
+def test_calls_are_audited_without_raw_arguments(client, make_key, owner):
     key = make_key(STUDENT)
     key_prefix = key.split("_")[1]
     call(client, key, "my_attendance", {"student_id": str(OTHER_STUDENT)})
-    owner_url = settings.owner_database_url.replace("postgresql+psycopg://", "postgresql://")
-    with psycopg.connect(owner_url) as conn:
-        rows = conn.execute(
-            """SELECT a.user_id, a.surface, a.action, a.status, a.args_hash, a.latency_ms
-               FROM audit_log a JOIN api_keys k ON k.id = a.key_id WHERE k.prefix = %s""",
-            (key_prefix,),
-        ).fetchall()
+    rows = owner.execute(
+        """SELECT a.user_id, a.surface, a.action, a.status, a.args_hash, a.latency_ms
+           FROM audit_log a JOIN api_keys k ON k.id = a.key_id WHERE k.prefix = %s""",
+        (key_prefix,),
+    ).fetchall()
     assert len(rows) == 1
     user_id, surface, action, status, args_hash, latency = rows[0]
     assert (user_id, surface, action, status) == (STUDENT, "mcp", "my_attendance", "no_records")

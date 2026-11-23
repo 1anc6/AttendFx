@@ -47,4 +47,9 @@ docs/       architecture and decisions
 
 ## Status
 
-Phase 0 done: schema, roles, RLS, seed data, permission tests, CI. Thin slice done: access keys, authenticated `/mcp` endpoint, `my_attendance` tool, audit log. Next: remaining tools (phases 1 to 3).
+Done:
+- Phase 0: schema, roles, RLS, seed data, permission tests, CI.
+- Thin slice: access keys, authenticated `/mcp` endpoint, audit log.
+- Phases 1 to 3: all six read-only tools: `search_courses`, `course_details`, `my_attendance`, `attendance_rule`, `course_attendance_summary`, `low_attendance_list`.
+
+Next: the two MCP resources (course list guide, term calendar), then rate limiting (phase 4) and the admin UI (phase 5).
