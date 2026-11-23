@@ -19,6 +19,14 @@ def call(client, key, name, arguments=None, *, method="tools/call"):
     return client.post("/mcp", json=body, headers=headers)
 
 
+def rpc(client, key, method, params=None):
+    headers = dict(HEADERS)
+    if key:
+        headers["Authorization"] = f"Bearer {key}"
+    body = {"jsonrpc": "2.0", "id": 1, "method": method, "params": params or {}}
+    return client.post("/mcp", json=body, headers=headers)
+
+
 def tool_result(response):
     """(is_error, structured_content, first text block)."""
     assert response.status_code == 200, response.text

@@ -50,6 +50,6 @@ docs/       architecture and decisions
 Done:
 - Phase 0: schema, roles, RLS, seed data, permission tests, CI.
 - Thin slice: access keys, authenticated `/mcp` endpoint, audit log.
-- Phases 1 to 3: all six read-only tools: `search_courses`, `course_details`, `my_attendance`, `attendance_rule`, `course_attendance_summary`, `low_attendance_list`.
+- Phases 1 to 3: all six read-only tools (`search_courses`, `course_details`, `my_attendance`, `attendance_rule`, `course_attendance_summary`, `low_attendance_list`) and both resources (`attendfx://guides/course-list`, `attendfx://calendar/current-term`).
 
-Next: the two MCP resources (course list guide, term calendar), then rate limiting (phase 4) and the admin UI (phase 5).
+Next: rate limiting and key lifecycle (phase 4), then the admin UI (phase 5).

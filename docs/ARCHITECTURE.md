@@ -79,7 +79,11 @@ Status: draft v1. Source: *Campus Course and Attendance Helper, Plain-Language G
 | `low_attendance_list` | teacher (own courses), admin | Students below a chosen percentage |
 | `attendance_rule` | all | Reads the configured minimum percentage |
 
-Resources: `course-list-guide` (valid course codes and term names) and `term-calendar` (start, end, holidays, Asia/Kolkata).
+Resources:
+- `attendfx://guides/course-list` (Markdown): course code format, valid term names with dates, every course by department.
+- `attendfx://calendar/current-term` (JSON): the current term (the one containing today, else the latest started, else the next), its status, start and end, and holidays, in Asia/Kolkata.
+
+Both are public catalogue data, identical for every role, but still require a valid key and are audited (`resource:<name>`).
 
 Denied or missing data returns the same short message, so the caller cannot tell "not allowed" from "does not exist". Errors never include stack traces, SQL or internal ids.
 
@@ -104,6 +108,7 @@ Row fields: timestamp (UTC), user id, key id, surface (`mcp` or `api`), tool or 
 - `attendance_records(id, class_session_id, student_id, status)` with status in `present | absent | late | excused`
 - `audit_log(...)` as in 3.6
 - `settings(key, value)` holds the minimum attendance percentage, for example `attendance_min_percent`
+- `terms(name, starts_on, ends_on)` and `term_holidays(term, day, name)`: the term calendar. Readable by `afx_app`, written by `afx_sync`, no RLS (public data)
 
 All timestamps are `timestamptz`, stored UTC, displayed as Asia/Kolkata.
 
@@ -167,7 +172,7 @@ There is no INSERT, UPDATE or DELETE grant for `afx_app`, so "admins cannot chan
 - **Backend**: Python 3.12, FastAPI, official `mcp` SDK (2.x, `MCPServer`), Pydantic v2, psycopg 3 with `psycopg_pool` and plain SQL, Alembic. No heavy ORM.
 - **Why psycopg and not asyncpg**: Neon's pooler runs in transaction mode, where asyncpg's prepared statements break.
 - **Sync driver, threaded calls (changed from the first draft)**: database calls use synchronous psycopg and run in worker threads (`anyio.to_thread`). Async psycopg needs a non-default event loop on Windows; the sync path behaves identically on Windows, Linux and CI, and is fast enough at this scale.
-- **MCP identity**: an ASGI wrapper verifies the bearer key and stores the Identity on the request scope. Tools read it from there, never from headers or tool arguments.
+- **MCP identity**: an ASGI wrapper verifies the bearer key and stores the Identity on the HTTP request scope. An MCP server middleware runs around each MCP message, copies it into a context variable for exactly that message, and resets it afterwards. Tools and resources read only that variable (never headers or arguments), and fail closed when it is empty. A concurrency test interleaves callers to prove identities never cross.
 - **MCP route**: `/mcp` is served by routing to the SDK app with the original scope (no `Mount`), so `POST /mcp` never redirects.
 - **Percent rule**: `attended_percent = (present + late) / (sessions - excused) * 100`. This is an assumption; the guide does not define it.
 - **Frontend**: React, TypeScript, Vite. Tables collapse into cards on small screens, charts come with a table view, full keyboard support.

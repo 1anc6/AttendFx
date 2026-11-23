@@ -7,7 +7,7 @@ Never put real student data through this path.
 
 import random
 import uuid
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import psycopg
@@ -20,6 +20,12 @@ NAMESPACE = uuid.UUID("6f1c2a52-0a4e-4d54-9a43-5a1d3d0e7c11")
 IST = ZoneInfo("Asia/Kolkata")
 TERM = "2026-Autumn"
 TERM_START = datetime(2026, 8, 3, tzinfo=IST)  # a Monday
+TERM_END = date(2026, 11, 27)  # a Friday: last teaching day
+# Fixed-date national holidays inside the term. No classes are scheduled on these days.
+HOLIDAYS = [
+    (date(2026, 8, 15), "Independence Day"),
+    (date(2026, 10, 2), "Gandhi Jayanti"),
+]
 SESSIONS_PER_COURSE = 16
 N_TEACHERS = 5
 N_STUDENTS = 40
@@ -101,11 +107,19 @@ def build_dataset(password_hash: str) -> dict[str, list[tuple]]:
             )
         )
         weekday, hour = index % 5, 9 + (index % 4)
-        for week in range(SESSIONS_PER_COURSE):
+        holiday_dates = {day for day, _ in HOLIDAYS}
+        week, held = 0, 0
+        while held < SESSIONS_PER_COURSE:  # skip holidays, keep the same number of sessions
             start = TERM_START + timedelta(weeks=week, days=weekday, hours=hour)
+            week += 1
+            if start.date() in holiday_dates:
+                continue
+            if start.date() > TERM_END:
+                raise ValueError(f"{code} does not fit in the term")
             sessions.append(
-                (uid("session", f"{code}:{week}"), course_id, start, start + timedelta(hours=1))
+                (uid("session", f"{code}:{held}"), course_id, start, start + timedelta(hours=1))
             )
+            held += 1
 
     session_ids_by_course = {}
     for s in sessions:
@@ -135,6 +149,8 @@ def build_dataset(password_hash: str) -> dict[str, list[tuple]]:
                 )
 
     return {
+        "terms": [(TERM, TERM_START.date(), TERM_END)],
+        "term_holidays": [(TERM, day, name) for day, name in HOLIDAYS],
         "users": users,
         "courses": courses,
         "enrolments": enrolments,
@@ -144,6 +160,14 @@ def build_dataset(password_hash: str) -> dict[str, list[tuple]]:
 
 
 UPSERTS = {
+    "terms": """
+        INSERT INTO terms (name, starts_on, ends_on) VALUES (%s, %s, %s)
+        ON CONFLICT (name) DO UPDATE SET starts_on = EXCLUDED.starts_on, ends_on = EXCLUDED.ends_on
+    """,
+    "term_holidays": """
+        INSERT INTO term_holidays (term, day, name) VALUES (%s, %s, %s)
+        ON CONFLICT (term, day) DO UPDATE SET name = EXCLUDED.name
+    """,
     "users": """
         INSERT INTO users (id, name, email, role, password_hash) VALUES (%s, %s, %s, %s, %s)
         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email,
@@ -178,7 +202,7 @@ def seed() -> dict[str, int]:
     data = build_dataset(password_hash)
     with psycopg.connect(settings.sync_database_url) as conn:
         with conn.cursor() as cur:
-            for table in ("users", "courses", "enrolments", "class_sessions", "attendance_records"):
+            for table in UPSERTS:  # dict order is dependency order
                 cur.executemany(UPSERTS[table], data[table])
             cur.execute(
                 "INSERT INTO settings (key, value) VALUES ('attendance_min_percent', %s) "
