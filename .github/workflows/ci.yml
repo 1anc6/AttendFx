@@ -51,10 +51,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # Run the gitleaks CLI over the full history instead of the action: the action derives a
+      # commit range from the push event and fails when the range starts at a root commit.
       - name: Secret scan (gitleaks)
-        uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: "8.24.3"
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -O "${base}/${archive}"
+          curl -sSfL -O "${base}/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep " ${archive}\$" "gitleaks_${GITLEAKS_VERSION}_checksums.txt" | sha256sum -c -
+          tar -xzf "${archive}" gitleaks
+          ./gitleaks detect --source . --redact -v --exit-code 2
       - uses: astral-sh/setup-uv@v5
       - name: Dependency audit (pip-audit)
         working-directory: backend
