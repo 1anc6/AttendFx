@@ -52,7 +52,7 @@ Status: draft v1. Source: *Campus Course and Attendance Helper, Plain-Language G
 ### 3.2 Request pipeline
 1. **Request id**: generated, attached to logs and the audit row.
 2. **Auth**: `/mcp` expects a bearer access key. `/api` expects a session cookie. Failure stops here with a generic error.
-3. **Rate limit**: token bucket per key (MCP) or per session (API). In-memory implementation behind a `RateLimiter` interface; Redis implementation later.
+3. **Rate limit**: token bucket per person (all of one user's keys share it; default burst 20, then 60 a minute), answered with 429 and `Retry-After` before any tool runs or any audit row is written. A second bucket per client IP counts failed key checks (default burst 60, then 30 a minute); while it is empty the IP gets 429 without a database lookup. That limit is generous because a whole campus may share one IP behind NAT. In-memory behind a `RateLimiter` interface, so limits are per process; use Redis when running more than one instance. Behind a proxy, run uvicorn with `--proxy-headers` so the real client IP is used.
 4. **Validation**: Pydantic. Reject bad course codes, date ranges outside the term, oversized inputs.
 5. **Handler**: service layer checks the role may call this tool, then runs its queries inside one RLS transaction (section 4.2).
 6. **Audit**: one row per request (section 3.6), written after the response.
@@ -63,6 +63,11 @@ Status: draft v1. Source: *Campus Course and Attendance Helper, Plain-Language G
 - Stored: prefix (indexed lookup) and SHA-256 of the secret. A fast hash is fine because the secret is random with 256 bits of entropy.
 - Columns: `expires_at`, `revoked_at`, `last_used_at`. Plaintext is shown once, at creation.
 - Revocation takes effect on the next request (no key caching beyond a few seconds, and none in v1).
+- Lifecycle rules (`services/keys.py`, shared by the CLI and the future web API):
+  - People create keys only for themselves. No one, not even an admin, mints a key that acts as someone else; only the operator CLI can, for bootstrapping and support.
+  - Every key expires in 1 to 365 days (default 90). At most 10 usable keys per person, enforced under a row lock.
+  - Owners revoke their own keys; admins can revoke anyone's. A key you may not see looks exactly like one that does not exist.
+  - Create and revoke are audited (`key.create`, `key.revoke`); operator actions use surface `cli`.
 
 **Web sign-in**
 - Email and password, argon2id. Account locks for a cooling-off period after N consecutive failures.

@@ -30,6 +30,7 @@ from app.audit import log as audit
 from app.auth.service import authenticate_key
 from app.config import get_settings
 from app.db.pools import Identity
+from app.ratelimit.limiter import RateLimiter, TokenBucketLimiter
 from app.services import attendance, courses, resources, staff
 from app.services.common import Denied, UserError
 
@@ -295,15 +296,39 @@ async def low_attendance_list(
 # ---------------------------------------------------------------------- transport
 
 
-class KeyAuthMiddleware:
-    """Pure ASGI wrapper: no valid access key, no MCP. Sets the identity on the request scope."""
+def _too_many(retry_after: int) -> JSONResponse:
+    return JSONResponse(
+        {"error": "rate_limited", "retry_after_seconds": retry_after},
+        status_code=429,
+        headers={"Retry-After": str(retry_after)},
+    )
 
-    def __init__(self, app: ASGIApp) -> None:
+
+class KeyAuthMiddleware:
+    """Pure ASGI wrapper in front of the MCP app.
+
+    1. A client IP with too many recent failed key checks gets 429 (no database lookup).
+    2. No valid access key: 401, and the failure counts against that IP.
+    3. A valid key whose person is over their request rate: 429 with Retry-After.
+    4. Otherwise the verified identity goes on the request scope and the request proceeds.
+    """
+
+    def __init__(
+        self, app: ASGIApp, *, user_limiter: RateLimiter, failure_limiter: RateLimiter
+    ) -> None:
         self.app = app
+        self.user_limiter = user_limiter
+        self.failure_limiter = failure_limiter
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
+            return
+
+        client_ip = (scope.get("client") or ("unknown",))[0]
+        blocked = self.failure_limiter.peek(client_ip)
+        if not blocked.allowed:
+            await _too_many(blocked.retry_after)(scope, receive, send)
             return
 
         header = Headers(scope=scope).get("authorization", "")
@@ -313,6 +338,7 @@ class KeyAuthMiddleware:
             identity = await anyio.to_thread.run_sync(authenticate_key, token)
 
         if identity is None:
+            self.failure_limiter.try_acquire(client_ip)
             response = JSONResponse(
                 {"error": "unauthorized"},
                 status_code=401,
@@ -321,14 +347,21 @@ class KeyAuthMiddleware:
             await response(scope, receive, send)
             return
 
+        decision = self.user_limiter.try_acquire(str(identity.user_id))
+        if not decision.allowed:
+            logger.info("rate limited user %s", identity.user_id)
+            await _too_many(decision.retry_after)(scope, receive, send)
+            return
+
         scope["afx_identity"] = identity  # set only here, from a verified key, never from headers
         scope["afx_request_id"] = uuid.uuid4().hex
         await self.app(scope, receive, send)
 
 
-def build_mcp_app() -> tuple[ASGIApp, Any]:
+def build_mcp_app() -> tuple[KeyAuthMiddleware, Any]:
     """Return (authenticated ASGI app, inner Starlette app whose lifespan must be run)."""
-    allowed_hosts = [h.strip() for h in get_settings().allowed_hosts.split(",") if h.strip()]
+    settings = get_settings()
+    allowed_hosts = [h.strip() for h in settings.allowed_hosts.split(",") if h.strip()]
     inner = mcp.streamable_http_app(
         streamable_http_path="/mcp",
         json_response=True,
@@ -339,4 +372,11 @@ def build_mcp_app() -> tuple[ASGIApp, Any]:
             allowed_origins=[],
         ),
     )
-    return KeyAuthMiddleware(inner), inner
+    wrapped = KeyAuthMiddleware(
+        inner,
+        user_limiter=TokenBucketLimiter(settings.rate_limit_per_minute, settings.rate_limit_burst),
+        failure_limiter=TokenBucketLimiter(
+            settings.auth_failures_per_minute, settings.auth_failures_burst
+        ),
+    )
+    return wrapped, inner

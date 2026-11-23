@@ -5,7 +5,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.auth.keys import generate_key
-from app.main import app
+from app.main import app, mcp_asgi
+from app.ratelimit.limiter import TokenBucketLimiter
 from app.repos import auth_repo
 
 
@@ -17,6 +18,15 @@ def owner_url(settings) -> str:
 def client(require_db):
     with TestClient(app) as c:
         yield c
+
+
+@pytest.fixture(autouse=True)
+def generous_limits():
+    """The suite makes hundreds of fast calls as the same few users. Give every test fresh,
+    effectively unlimited buckets; rate-limit tests install tight ones themselves."""
+    mcp_asgi.user_limiter = TokenBucketLimiter(1_000_000, 1_000_000)
+    mcp_asgi.failure_limiter = TokenBucketLimiter(1_000_000, 1_000_000)
+    yield
 
 
 @pytest.fixture(scope="session")

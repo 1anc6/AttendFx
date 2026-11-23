@@ -31,6 +31,14 @@ class Settings(BaseSettings):
     # this to the public hostname, for example "attendfx.onrender.com".
     allowed_hosts: str = "localhost:*,127.0.0.1:*,testserver"
 
+    # Requests per person (all of one user's keys share a bucket): burst, then N a minute.
+    rate_limit_per_minute: float = 60
+    rate_limit_burst: int = 20
+    # Failed key checks per client IP before that IP gets 429s. Generous on purpose: a whole
+    # campus can share one IP behind NAT. Behind a proxy, run uvicorn with --proxy-headers.
+    auth_failures_per_minute: float = 30
+    auth_failures_burst: int = 60
+
 
 def get_settings() -> Settings:
     return Settings()  # type: ignore[call-arg]

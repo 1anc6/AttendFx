@@ -25,7 +25,11 @@ Mint an access key for a seeded user and talk to the MCP endpoint:
 ```powershell
 uv run python -m app.worker create-key --email student01@attendfx.test --days 7
 # then connect an MCP client to http://localhost:8000/mcp with header  Authorization: Bearer <key>
+uv run python -m app.worker list-keys --email student01@attendfx.test
+uv run python -m app.worker revoke-key --prefix <8-char prefix>
 ```
+
+Each person gets a burst of 20 requests, then 60 a minute (`AFX_RATE_LIMIT_BURST`, `AFX_RATE_LIMIT_PER_MINUTE`).
 
 Seeded accounts use `@attendfx.test` emails (`admin@`, `teacher1@`..`teacher5@`, `student01@`..`student40@`) and the password in `AFX_SEED_PASSWORD`. All data is fake.
 
@@ -52,4 +56,6 @@ Done:
 - Thin slice: access keys, authenticated `/mcp` endpoint, audit log.
 - Phases 1 to 3: all six read-only tools (`search_courses`, `course_details`, `my_attendance`, `attendance_rule`, `course_attendance_summary`, `low_attendance_list`) and both resources (`attendfx://guides/course-list`, `attendfx://calendar/current-term`).
 
-Next: rate limiting and key lifecycle (phase 4), then the admin UI (phase 5).
+- Phase 4: per-person rate limits, failed-key throttling per IP, key lifecycle rules (expiry, 10-key cap, owner/admin revocation), operator CLI, audit for key actions.
+
+Next: the admin UI (phase 5): web sign-in with lockout, then the pages.

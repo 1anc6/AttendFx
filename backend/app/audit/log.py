@@ -16,7 +16,7 @@ def hash_args(args: dict) -> str:
 
 
 def record(
-    identity: Identity,
+    identity: Identity | None,
     *,
     surface: str,
     action: str,
@@ -25,11 +25,14 @@ def record(
     latency_ms: int,
     request_id: str | None,
 ) -> None:
-    """Write one audit row. A failure here is logged but never breaks the request."""
+    """Write one audit row. A failure here is logged but never breaks the request.
+
+    `identity` is None for operator (CLI) actions, recorded with no user.
+    """
     try:
         auth_repo.insert_audit(
-            user_id=identity.user_id,
-            key_id=identity.key_id,
+            user_id=identity.user_id if identity else None,
+            key_id=identity.key_id if identity else None,
             surface=surface,
             action=action,
             args_hash=hash_args(args),
