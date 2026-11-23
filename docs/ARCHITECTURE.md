@@ -164,8 +164,12 @@ There is no INSERT, UPDATE or DELETE grant for `afx_app`, so "admins cannot chan
 | Dependency issues | pip-audit, npm audit, Trivy in CI |
 
 ## 6. Technology choices
-- **Backend**: Python 3.12, FastAPI, official `mcp` SDK, Pydantic v2, psycopg 3 (async) with SQLAlchemy Core or plain SQL, Alembic. No heavy ORM.
+- **Backend**: Python 3.12, FastAPI, official `mcp` SDK (2.x, `MCPServer`), Pydantic v2, psycopg 3 with `psycopg_pool` and plain SQL, Alembic. No heavy ORM.
 - **Why psycopg and not asyncpg**: Neon's pooler runs in transaction mode, where asyncpg's prepared statements break.
+- **Sync driver, threaded calls (changed from the first draft)**: database calls use synchronous psycopg and run in worker threads (`anyio.to_thread`). Async psycopg needs a non-default event loop on Windows; the sync path behaves identically on Windows, Linux and CI, and is fast enough at this scale.
+- **MCP identity**: an ASGI wrapper verifies the bearer key and stores the Identity on the request scope. Tools read it from there, never from headers or tool arguments.
+- **MCP route**: `/mcp` is served by routing to the SDK app with the original scope (no `Mount`), so `POST /mcp` never redirects.
+- **Percent rule**: `attended_percent = (present + late) / (sessions - excused) * 100`. This is an assumption; the guide does not define it.
 - **Frontend**: React, TypeScript, Vite. Tables collapse into cards on small screens, charts come with a table view, full keyboard support.
 - **Database**: Neon Postgres (plain Postgres, no second auth system). Local dev uses Postgres in Docker Compose.
 - **Tests**: pytest (unit, integration, permission matrix), Vitest, Playwright later.

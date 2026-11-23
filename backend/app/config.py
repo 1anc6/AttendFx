@@ -27,6 +27,10 @@ class Settings(BaseSettings):
 
     seed_password: str = "dev-password-change-me"
 
+    # Host header values the MCP endpoint accepts (DNS-rebinding protection). In production set
+    # this to the public hostname, for example "attendfx.onrender.com".
+    allowed_hosts: str = "localhost:*,127.0.0.1:*,testserver"
+
 
 def get_settings() -> Settings:
     return Settings()  # type: ignore[call-arg]

@@ -20,6 +20,13 @@ uv run pytest                        # unit + permission tests
 uv run uvicorn app.main:app --reload # http://localhost:8000/healthz
 ```
 
+Mint an access key for a seeded user and talk to the MCP endpoint:
+
+```powershell
+uv run python -m app.worker create-key --email student01@attendfx.test --days 7
+# then connect an MCP client to http://localhost:8000/mcp with header  Authorization: Bearer <key>
+```
+
 Seeded accounts use `@attendfx.test` emails (`admin@`, `teacher1@`..`teacher5@`, `student01@`..`student40@`) and the password in `AFX_SEED_PASSWORD`. All data is fake.
 
 Run `psql` without installing it locally:
@@ -40,4 +47,4 @@ docs/       architecture and decisions
 
 ## Status
 
-Phase 0 done: schema, roles, RLS, seed data, permission tests, CI skeleton. Next: thin slice (`my_attendance` end to end).
+Phase 0 done: schema, roles, RLS, seed data, permission tests, CI. Thin slice done: access keys, authenticated `/mcp` endpoint, `my_attendance` tool, audit log. Next: remaining tools (phases 1 to 3).
