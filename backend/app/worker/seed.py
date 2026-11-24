@@ -171,7 +171,8 @@ UPSERTS = {
     "users": """
         INSERT INTO users (id, name, email, role, password_hash) VALUES (%s, %s, %s, %s, %s)
         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email,
-            role = EXCLUDED.role, password_hash = EXCLUDED.password_hash
+            role = EXCLUDED.role, password_hash = EXCLUDED.password_hash,
+            must_change_password = false, disabled_at = NULL
     """,
     "courses": """
         INSERT INTO courses (id, code, title, department, credits, term, description, teacher_id)

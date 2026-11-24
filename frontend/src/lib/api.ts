@@ -11,8 +11,69 @@ export interface User {
 
 export interface Me {
   user: User
+  /** Signed in with a temporary password: only Account works until it is replaced. */
+  must_change_password: boolean
   csrf_token: string
   expires_at: string
+}
+
+export type PersonStatus = 'all' | 'active' | 'locked' | 'must_change' | 'disabled'
+
+export interface Person extends User {
+  created_at: string
+  last_sign_in_at: string | null
+  locked_until: string | null
+  disabled_at: string | null
+  must_change_password: boolean
+  active_keys: number
+}
+
+export interface PeopleCounts {
+  total: number
+  student: number
+  teacher: number
+  admin: number
+  locked: number
+  must_change: number
+  disabled: number
+}
+
+export interface PeoplePage {
+  people: Person[]
+  total: number
+  page: number
+  page_size: number
+  counts: PeopleCounts
+}
+
+export interface PeopleQuery {
+  q: string
+  role: Role | 'all'
+  status: PersonStatus
+  page: number
+}
+
+/** A new or reset account. The temporary password is shown once and never stored readable. */
+export interface IssuedPerson {
+  id: string
+  name: string
+  email: string
+  role: Role
+  temporary_password: string
+}
+
+export interface ImportRow {
+  line: number
+  name: string
+  email: string
+  role: Role
+}
+
+export interface ImportResult {
+  rows: ImportRow[]
+  errors: { line: number; message: string }[]
+  created: boolean
+  people: IssuedPerson[]
 }
 
 export type KeyStatus = 'active' | 'expired' | 'revoked'
@@ -91,4 +152,28 @@ export const api = {
   createKey: (name: string, days: number) =>
     request<IssuedKey>('POST', '/api/keys', { name, days }),
   revokeKey: (id: string) => request<{ status: string }>('POST', `/api/keys/${id}/revoke`),
+  changePassword: (current_password: string, new_password: string) =>
+    request<Me>('POST', '/api/account/password', { current_password, new_password }),
+
+  people: ({ q, role, status, page }: PeopleQuery) => {
+    const params = new URLSearchParams({ status, page: String(page) })
+    if (q.trim()) params.set('q', q.trim())
+    if (role !== 'all') params.set('role', role)
+    return request<PeoplePage>('GET', `/api/people?${params}`)
+  },
+  createPerson: (name: string, email: string, role: Role) =>
+    request<IssuedPerson>('POST', '/api/people', { name, email, role }),
+  importPeople: (csv: string, dry_run: boolean) =>
+    request<ImportResult>('POST', '/api/people/import', { csv, dry_run }),
+  resetPassword: (id: string) =>
+    request<{ id: string; temporary_password: string }>(
+      'POST',
+      `/api/people/${id}/reset-password`,
+    ),
+  unlockPerson: (id: string) =>
+    request<{ id: string; unlocked: boolean }>('POST', `/api/people/${id}/unlock`),
+  setDisabled: (id: string, disabled: boolean) =>
+    request<{ id: string; disabled: boolean }>('POST', `/api/people/${id}/disabled`, {
+      disabled,
+    }),
 }

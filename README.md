@@ -42,7 +42,7 @@ npm run dev       # http://localhost:5173, proxies /api and /mcp to uvicorn on :
 npm run build     # frontend/dist, which uvicorn then serves at http://localhost:8000
 ```
 
-Sign in with any seeded account. Five wrong passwords lock an account for 15 minutes.
+Sign in with any seeded account. Five wrong passwords lock an account for 15 minutes. Admins add people under Admin → People; each new account gets a temporary password that must be replaced at first sign-in.
 
 ### Database shell
 
@@ -72,5 +72,5 @@ Done:
 - Phase 4: per-person rate limits, failed-key throttling per IP, key lifecycle rules (expiry, 10-key cap, owner/admin revocation), operator CLI, audit for key actions.
 
 In progress, phase 5 (web app):
-- Done: web sign-in with lockout, cookie sessions with CSRF, `/api` for keys, security headers, the app shell, Your access keys, Connect assistant.
-- Next: Account (change password), admin Overview, People (create accounts, CSV import), Activity, Usage.
+- Done: web sign-in with lockout, cookie sessions with CSRF, `/api` for keys, security headers, the app shell, Your access keys, Connect assistant, Account (change password), People (add one, CSV import, temporary passwords, reset, unlock, turn off).
+- Next: admin Overview, Activity, Usage.

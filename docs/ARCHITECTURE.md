@@ -77,7 +77,16 @@ Status: draft v1. Source: *Campus Course and Attendance Helper, Plain-Language G
 - CSRF: each session has its own token, returned by `/api/me` and sign-in. Every state-changing request must send it as `X-CSRF-Token` (constant-time compare). Sign-in itself accepts only a JSON body, which a cross-site HTML form cannot send.
 - `/api` is rate-limited per person with the same budget as MCP. Responses carry `Cache-Control: no-store`.
 - All roles can sign in (everyone manages their own keys). Admin pages are gated by role in the API, not only in the UI.
-- Audit actions: `web.sign_in` (`ok`, `invalid`, `locked`), `web.sign_out`, plus the key actions above with surface `api`.
+- Audit actions: `web.sign_in` (`ok`, `invalid`, `locked`, `disabled`), `web.sign_out`, plus the key actions above with surface `api`.
+
+**Accounts** (`services/people.py`, `auth/web.py`)
+- Change password (`POST /api/account/password`): needs the current password, which counts toward the lockout like a sign-in, so a borrowed session cannot be used to guess it. The new one must be 12 to 128 characters, differ from the current one and from the email; no composition rules or forced rotation (NIST 800-63B). It ends every other web session of that person. Access keys keep working.
+- Admins create accounts one at a time or from a CSV (`name,email,role` header, other columns ignored, at most 200 rows). The import is checked first (`dry_run`), reports problems per line (bad email or role, duplicate in the file, email already taken), and creates nobody unless the whole file is clean; creation is one transaction.
+- New and reset accounts get a temporary password (16 characters from an unambiguous alphabet, about 79 bits), shown to the admin once. Admins never choose or see anyone's real password. A session signed in with a temporary password may only read `/api/me`, change its password and sign out; everything else answers 403 until it does.
+- Reset password also clears any lockout and ends the person's web sessions. Unlock clears only the lockout.
+- Turning an account off (`users.disabled_at`) ends its sessions, refuses sign-in, and stops its access keys (checked on every key lookup). Nothing is deleted, and turning it back on restores the keys. Sign-in reveals "turned off" only after the right password, so it does not tell strangers which emails exist.
+- Admins cannot reset or turn off their own account here (Account is for that), which also keeps at least one working admin. Changing someone's role is not offered: it changes what their keys can read, so it belongs in the data sync.
+- `/api/people` runs as `afx_auth`, which sees every account, so the admin check is in the service as well as the route. Audit actions: `account.password_change`, `person.create`, `person.import`, `person.reset_password`, `person.unlock`, `person.disable`, `person.enable`.
 
 **Web app hosting and headers** (`web_ui.py`)
 - FastAPI serves `frontend/dist` on the same origin as `/api` and `/mcp`: hashed assets under `/assets`, `index.html` for client-side routes, never for `/api/*` or `/mcp`.
@@ -114,7 +123,7 @@ Row fields: timestamp (UTC), user id, key id, surface (`mcp` or `api`), tool or 
 ## 4. Data and the privacy rule
 
 ### 4.1 Tables
-- `users(id, name, email, role, password_hash, failed_logins, locked_until, created_at)`
+- `users(id, name, email, role, password_hash, failed_logins, locked_until, disabled_at, must_change_password, last_sign_in_at, created_at)`
 - `api_keys(id, user_id, name, prefix, secret_hash, expires_at, revoked_at, last_used_at, created_at)`
 - `web_sessions(id, user_id, csrf_token, expires_at, created_at)`
 - `courses(id, code, title, department, credits, term, teacher_id)`

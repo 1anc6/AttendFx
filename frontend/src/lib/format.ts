@@ -11,8 +11,20 @@ const dateFmt = new Intl.DateTimeFormat('en-IN', {
 })
 const rtf = new Intl.RelativeTimeFormat('en-IN', { numeric: 'auto' })
 
+const dateTimeFmt = new Intl.DateTimeFormat('en-IN', {
+  timeZone: TZ,
+  day: 'numeric',
+  month: 'short',
+  hour: 'numeric',
+  minute: '2-digit',
+})
+
 export function formatDate(iso: string): string {
   return dateFmt.format(new Date(iso))
+}
+
+export function formatDateTime(iso: string): string {
+  return dateTimeFmt.format(new Date(iso))
 }
 
 export function daysUntil(iso: string, now = Date.now()): number {

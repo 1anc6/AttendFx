@@ -23,7 +23,7 @@ def find_key(prefix: str) -> KeyRecord | None:
             """
             SELECT k.id, k.user_id, u.role, k.secret_hash, k.expires_at, k.revoked_at
             FROM api_keys k JOIN users u ON u.id = k.user_id
-            WHERE k.prefix = %s
+            WHERE k.prefix = %s AND u.disabled_at IS NULL
             """,
             (prefix,),
         ).fetchone()

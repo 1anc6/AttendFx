@@ -44,6 +44,10 @@ export function AppLayout({ adminOnly = false }: { adminOnly?: boolean }) {
     const next = encodeURIComponent(location.pathname)
     return <Navigate to={`/sign-in?next=${next}`} replace />
   }
+  // A temporary password unlocks nothing but choosing a real one.
+  if (me.must_change_password && location.pathname !== '/account') {
+    return <Navigate to="/account" replace />
+  }
   if (adminOnly && me.user.role !== 'admin') return <Navigate to="/keys" replace />
 
   return (

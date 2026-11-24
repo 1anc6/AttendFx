@@ -57,14 +57,29 @@ export function useSignIn() {
   })
 }
 
+/** Change your own password. The server ends your other sessions and returns a fresh `me`. */
+export function useChangePassword() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ current, next }: { current: string; next: string }) =>
+      api.changePassword(current, next),
+    onSuccess: (me) => {
+      rememberCsrf(me.csrf_token)
+      qc.setQueryData(ME, me)
+    },
+  })
+}
+
 export function useSignOut() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: () => api.signOut(),
     onSettled: () => {
       rememberCsrf(null)
-      qc.clear()
+      // Null the session in place so the layout guard sees it and goes to sign-in; clear()
+      // would drop the query the guard is watching and leave the page up.
       qc.setQueryData(ME, null)
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== ME[0] })
     },
   })
 }
