@@ -95,6 +95,52 @@ def enrolled_count(conn: psycopg.Connection, course_id: UUID) -> int:
     ).fetchone()[0]
 
 
+def term_enrolments(conn: psycopg.Connection, term: str) -> list[tuple]:
+    """One row per enrolment in the term's courses: (student_id, student_name, course_code,
+    course_title, teacher_name, present, absent, late, excused). Enrolments with no records yet
+    come back with zero counts. RLS decides which enrolments and records the caller sees."""
+    return conn.execute(
+        """
+        SELECT e.student_id, su.name, c.code, c.title, tu.name,
+               count(a.id) FILTER (WHERE a.status = 'present'),
+               count(a.id) FILTER (WHERE a.status = 'absent'),
+               count(a.id) FILTER (WHERE a.status = 'late'),
+               count(a.id) FILTER (WHERE a.status = 'excused')
+        FROM enrolments e
+        JOIN courses c ON c.id = e.course_id AND c.term = %s
+        JOIN users su ON su.id = e.student_id
+        LEFT JOIN users tu ON tu.id = c.teacher_id
+        LEFT JOIN class_sessions s ON s.course_id = c.id
+        LEFT JOIN attendance_records a
+               ON a.class_session_id = s.id AND a.student_id = e.student_id
+        GROUP BY e.student_id, su.name, c.code, c.title, tu.name
+        """,
+        (term,),
+    ).fetchall()
+
+
+def fortnight_counts(
+    conn: psycopg.Connection, term: str, starts_on: date
+) -> list[tuple[int, str, int]]:
+    """(fortnight number from the term start, status, count) for every record in the term."""
+    return conn.execute(
+        """
+        SELECT ((s.starts_at AT TIME ZONE %s)::date - %s::date) / 14, a.status, count(*)
+        FROM attendance_records a
+        JOIN class_sessions s ON s.id = a.class_session_id
+        JOIN courses c ON c.id = s.course_id
+        WHERE c.term = %s
+        GROUP BY 1, 2
+        ORDER BY 1
+        """,
+        (IST, starts_on, term),
+    ).fetchall()
+
+
+def term_course_count(conn: psycopg.Connection, term: str) -> int:
+    return conn.execute("SELECT count(*) FROM courses WHERE term = %s", (term,)).fetchone()[0]
+
+
 def min_attendance_percent(conn: psycopg.Connection) -> float | None:
     row = conn.execute("SELECT value FROM settings WHERE key = 'attendance_min_percent'").fetchone()
     return float(row[0]) if row else None
