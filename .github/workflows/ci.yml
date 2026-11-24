@@ -39,11 +39,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --frozen
-      - run: uv run ruff check .
-      - run: uv run ruff format --check .
+      - run: uv run ruff check . ../evals
+      - run: uv run ruff format --check . ../evals
       - run: uv run alembic upgrade head
       - run: uv run python -m app.worker seed
       - run: uv run pytest -q
+      - name: 60-question test
+        run: uv run python ../evals/run.py
 
   frontend:
     runs-on: ubuntu-latest
