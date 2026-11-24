@@ -74,4 +74,5 @@ Done:
 
 In progress, phase 6 (ship):
 - Done: the 60-question test (`evals/`): 60 of 60 pass, run in CI. See [evals/results.md](evals/results.md).
-- Next: pip-audit and Trivy in CI, demo write-up.
+- Done: security scans in CI: gitleaks (secrets), pip-audit and npm audit (dependencies), and Trivy on the production image and its Dockerfile.
+- Next: demo write-up.

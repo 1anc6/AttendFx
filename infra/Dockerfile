@@ -19,12 +19,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_PYTHON_DOWNLOADS=never \
     PATH="/app/backend/.venv/bin:$PATH"
 
-COPY --from=ghcr.io/astral-sh/uv:0.13.9 /uv /usr/local/bin/uv
-
 # config.py finds the web build at <repo root>/frontend/dist, so the layout mirrors the repo.
 WORKDIR /app/backend
 COPY backend/pyproject.toml backend/uv.lock ./
-RUN uv sync --frozen --no-dev
+# uv is mounted for this step only and keeps no download cache: neither ends up in the image.
+RUN --mount=from=ghcr.io/astral-sh/uv:0.13.9,source=/uv,target=/usr/local/bin/uv \
+    uv sync --frozen --no-dev --no-cache
 
 COPY backend/ ./
 COPY --from=web /src/frontend/dist /app/frontend/dist
