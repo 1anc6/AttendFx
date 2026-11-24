@@ -72,7 +72,7 @@ Done:
 - Phase 5 (web app): web sign-in with lockout, cookie sessions with CSRF, `/api` for keys and people, security headers, the app shell, Your access keys, Connect assistant, Account (change password), People (add one, CSV import, temporary passwords, reset, unlock, turn off), and the admin dashboards: Overview (term attendance, fortnight trend, enrolment funnel, students below the minimum), Activity (the audit log, searchable and filterable, no arguments or answers shown) and Usage (calls per day, by tool with median and p95 latency, most active people, over 7, 30 or 90 days). Every chart has a table view.
 - Deployed on Render with a Neon database (`infra/Dockerfile`).
 
-In progress, phase 6 (ship):
+Phase 6 (ship):
 - Done: the 60-question test (`evals/`): 60 of 60 pass, run in CI. See [evals/results.md](evals/results.md).
 - Done: security scans in CI: gitleaks (secrets), pip-audit and npm audit (dependencies), and Trivy on the production image and its Dockerfile.
 - Done: demo write-up, see [docs/DEMO.md](docs/DEMO.md).
