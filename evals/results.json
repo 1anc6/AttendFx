@@ -1,0 +1,772 @@
+{
+  "cases": [
+    {
+      "id": "C01",
+      "area": "Catalogue",
+      "persona": "student1",
+      "question": "What courses are running this term?",
+      "tool": "search_courses",
+      "args": {},
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "C02",
+      "area": "Catalogue",
+      "persona": "student2",
+      "question": "Which Computer Science courses are there?",
+      "tool": "search_courses",
+      "args": {
+        "department": "Computer Science"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "C03",
+      "area": "Catalogue",
+      "persona": "teacher1",
+      "question": "Is there a course on machine learning?",
+      "tool": "search_courses",
+      "args": {
+        "query": "machine learning"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "C04",
+      "area": "Catalogue",
+      "persona": "student3",
+      "question": "Who teaches Database Systems?",
+      "tool": "search_courses",
+      "args": {
+        "query": "Database"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "C05",
+      "area": "Catalogue",
+      "persona": "student4",
+      "question": "How many credits is PHY101 worth?",
+      "tool": "course_details",
+      "args": {
+        "course_code": "PHY101"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "C06",
+      "area": "Catalogue",
+      "persona": "student5",
+      "question": "When does CSE302 meet each week?",
+      "tool": "course_details",
+      "args": {
+        "course_code": "CSE302"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "C07",
+      "area": "Catalogue",
+      "persona": "admin",
+      "question": "When are the first and last classes of MAT201?",
+      "tool": "course_details",
+      "args": {
+        "course_code": "MAT201"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "C08",
+      "area": "Catalogue",
+      "persona": "student6",
+      "question": "List the 2026-Autumn Mathematics courses.",
+      "tool": "search_courses",
+      "args": {
+        "department": "Mathematics",
+        "term": "2026-Autumn"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "C09",
+      "area": "Catalogue",
+      "persona": "student7",
+      "question": "Are any courses on in 2025-Spring?",
+      "tool": "search_courses",
+      "args": {
+        "term": "2025-Spring"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "C10",
+      "area": "Catalogue",
+      "persona": "student8",
+      "question": "What is course XYZ999 about?",
+      "tool": "course_details",
+      "args": {
+        "course_code": "XYZ999"
+      },
+      "outcome": "invalid",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "C11",
+      "area": "Catalogue",
+      "persona": "student9",
+      "question": "Tell me about cse301 (typed in lower case).",
+      "tool": "course_details",
+      "args": {
+        "course_code": "cse301"
+      },
+      "outcome": "invalid",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "R01",
+      "area": "Calendar",
+      "persona": "student1",
+      "question": "When does this term start and end?",
+      "tool": "resource:attendfx://calendar/current-term",
+      "args": {},
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "R02",
+      "area": "Calendar",
+      "persona": "student10",
+      "question": "Is there class on 2 October?",
+      "tool": "resource:attendfx://calendar/current-term",
+      "args": {},
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "R03",
+      "area": "Calendar",
+      "persona": "teacher2",
+      "question": "Which course codes can I ask about?",
+      "tool": "resource:attendfx://guides/course-list",
+      "args": {},
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "P01",
+      "area": "Policy",
+      "persona": "student1",
+      "question": "What's the minimum attendance I need?",
+      "tool": "attendance_rule",
+      "args": {},
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "P02",
+      "area": "Policy",
+      "persona": "student11",
+      "question": "Does being late count against me?",
+      "tool": "attendance_rule",
+      "args": {},
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "P03",
+      "area": "Policy",
+      "persona": "teacher1",
+      "question": "How is the attendance percentage worked out?",
+      "tool": "attendance_rule",
+      "args": {},
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "S01",
+      "area": "Student",
+      "persona": "student1",
+      "question": "What's my attendance overall?",
+      "tool": "my_attendance",
+      "args": {},
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "S02",
+      "area": "Student",
+      "persona": "student2",
+      "question": "How am I doing in CSE301?",
+      "tool": "my_attendance",
+      "args": {
+        "course_code": "CSE301"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "S03",
+      "area": "Student",
+      "persona": "student3",
+      "question": "Am I below 75% in any course?",
+      "tool": "my_attendance",
+      "args": {},
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "S04",
+      "area": "Student",
+      "persona": "student4",
+      "question": "What was my attendance in August?",
+      "tool": "my_attendance",
+      "args": {
+        "from_date": "2026-08-01",
+        "to_date": "2026-08-31"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "S05",
+      "area": "Student",
+      "persona": "student5",
+      "question": "How many classes did I miss in CSE302 in September?",
+      "tool": "my_attendance",
+      "args": {
+        "course_code": "CSE302",
+        "from_date": "2026-09-01",
+        "to_date": "2026-09-30"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "S06",
+      "area": "Student",
+      "persona": "student6",
+      "question": "What's my attendance in CSE315? (not enrolled)",
+      "tool": "my_attendance",
+      "args": {
+        "course_code": "CSE315"
+      },
+      "outcome": "no_records",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "S07",
+      "area": "Student",
+      "persona": "student12",
+      "question": "How many excused absences do I have?",
+      "tool": "my_attendance",
+      "args": {},
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "S08",
+      "area": "Student",
+      "persona": "student13",
+      "question": "What's my attendance in October across all courses?",
+      "tool": "my_attendance",
+      "args": {
+        "from_date": "2026-10-01",
+        "to_date": "2026-10-31"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "S09",
+      "area": "Student",
+      "persona": "student14",
+      "question": "Show my attendance from 30 September back to 1 September.",
+      "tool": "my_attendance",
+      "args": {
+        "from_date": "2026-09-30",
+        "to_date": "2026-09-01"
+      },
+      "outcome": "invalid",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "S10",
+      "area": "Student",
+      "persona": "lowest",
+      "question": "I think I've missed a lot. What's my attendance?",
+      "tool": "my_attendance",
+      "args": {},
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "T01",
+      "area": "Teacher",
+      "persona": "teacher1",
+      "question": "How is attendance in CSE301 overall?",
+      "tool": "course_attendance_summary",
+      "args": {
+        "course_code": "CSE301"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "T02",
+      "area": "Teacher",
+      "persona": "teacher1",
+      "question": "Who is below the minimum in CSE301?",
+      "tool": "low_attendance_list",
+      "args": {
+        "course_code": "CSE301"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "T03",
+      "area": "Teacher",
+      "persona": "teacher1",
+      "question": "Which PHY101 students are under 90%?",
+      "tool": "low_attendance_list",
+      "args": {
+        "course_code": "PHY101",
+        "threshold_percent": 90
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "T04",
+      "area": "Teacher",
+      "persona": "teacher2",
+      "question": "Give me the attendance summary for CSE302.",
+      "tool": "course_attendance_summary",
+      "args": {
+        "course_code": "CSE302"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "T05",
+      "area": "Teacher",
+      "persona": "teacher3",
+      "question": "Who's falling behind in HSS110?",
+      "tool": "low_attendance_list",
+      "args": {
+        "course_code": "HSS110"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "T06",
+      "area": "Teacher",
+      "persona": "teacher1",
+      "question": "How is this student of mine doing in CSE301?",
+      "tool": "my_attendance",
+      "args": {
+        "student_id": "1aa806b2-b194-5559-b676-53a6f4ab7465",
+        "course_code": "CSE301"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "T07",
+      "area": "Teacher",
+      "persona": "teacher1",
+      "question": "Show everything you have on this student of mine.",
+      "tool": "my_attendance",
+      "args": {
+        "student_id": "1aa806b2-b194-5559-b676-53a6f4ab7465"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "T08",
+      "area": "Teacher",
+      "persona": "teacher4",
+      "question": "How was MAT201 attendance in October?",
+      "tool": "course_attendance_summary",
+      "args": {
+        "course_code": "MAT201",
+        "from_date": "2026-10-01",
+        "to_date": "2026-10-31"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "T09",
+      "area": "Teacher",
+      "persona": "teacher5",
+      "question": "What's my attendance? (a teacher asking without naming a student)",
+      "tool": "my_attendance",
+      "args": {},
+      "outcome": "invalid",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "T10",
+      "area": "Teacher",
+      "persona": "teacher2",
+      "question": "List ECE240 students under 101%.",
+      "tool": "low_attendance_list",
+      "args": {
+        "course_code": "ECE240",
+        "threshold_percent": 101
+      },
+      "outcome": "invalid",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "A01",
+      "area": "Admin",
+      "persona": "admin",
+      "question": "How is attendance in MAT210?",
+      "tool": "course_attendance_summary",
+      "args": {
+        "course_code": "MAT210"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "A02",
+      "area": "Admin",
+      "persona": "admin",
+      "question": "Who is below the minimum in CSE315?",
+      "tool": "low_attendance_list",
+      "args": {
+        "course_code": "CSE315"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "A03",
+      "area": "Admin",
+      "persona": "admin",
+      "question": "What is student 10's overall attendance?",
+      "tool": "my_attendance",
+      "args": {
+        "student_id": "ed22c705-af0c-51bc-a48d-954a79552587"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "A04",
+      "area": "Admin",
+      "persona": "admin",
+      "question": "How did HSS110 do in August?",
+      "tool": "course_attendance_summary",
+      "args": {
+        "course_code": "HSS110",
+        "from_date": "2026-08-01",
+        "to_date": "2026-08-31"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "A05",
+      "area": "Admin",
+      "persona": "admin",
+      "question": "Who in ECE240 is under 80% this term?",
+      "tool": "low_attendance_list",
+      "args": {
+        "course_code": "ECE240",
+        "threshold_percent": 80,
+        "term": "2026-Autumn"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X01",
+      "area": "Privacy",
+      "persona": "student1",
+      "question": "What is student 2's attendance?",
+      "tool": "my_attendance",
+      "args": {
+        "student_id": "af325a2b-6b00-518e-a0a9-c1956636bd11"
+      },
+      "outcome": "no_records",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X02",
+      "area": "Privacy",
+      "persona": "student1",
+      "question": "Give me the class summary for CSE301.",
+      "tool": "course_attendance_summary",
+      "args": {
+        "course_code": "CSE301"
+      },
+      "outcome": "denied",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X03",
+      "area": "Privacy",
+      "persona": "student2",
+      "question": "Who has low attendance in CSE302?",
+      "tool": "low_attendance_list",
+      "args": {
+        "course_code": "CSE302"
+      },
+      "outcome": "denied",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X04",
+      "area": "Privacy",
+      "persona": "teacher1",
+      "question": "Summarise attendance in CSE302 (someone else's course).",
+      "tool": "course_attendance_summary",
+      "args": {
+        "course_code": "CSE302"
+      },
+      "outcome": "no_records",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X05",
+      "area": "Privacy",
+      "persona": "teacher1",
+      "question": "Who is behind in ECE240 (someone else's course)?",
+      "tool": "low_attendance_list",
+      "args": {
+        "course_code": "ECE240"
+      },
+      "outcome": "no_records",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X06",
+      "area": "Privacy",
+      "persona": "teacher1",
+      "question": "What is this student's attendance? (not in any of my courses)",
+      "tool": "my_attendance",
+      "args": {
+        "student_id": "05836cca-c9df-5b4c-9e46-32a6cdee31ed"
+      },
+      "outcome": "no_records",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X07",
+      "area": "Privacy",
+      "persona": "teacher1",
+      "question": "How is my student doing in a course I don't teach?",
+      "tool": "my_attendance",
+      "args": {
+        "student_id": "1aa806b2-b194-5559-b676-53a6f4ab7465",
+        "course_code": "CSE302"
+      },
+      "outcome": "no_records",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X08",
+      "area": "Privacy",
+      "persona": "teacher1",
+      "question": "What's the attendance of a student id that doesn't exist?",
+      "tool": "my_attendance",
+      "args": {
+        "student_id": "00000000-0000-4000-8000-000000000000"
+      },
+      "outcome": "no_records",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X09",
+      "area": "Privacy",
+      "persona": "student3",
+      "question": "What's teacher 1's attendance? (a teacher's id)",
+      "tool": "my_attendance",
+      "args": {
+        "student_id": "95d86933-981a-54a2-87d6-c462f3635b1d"
+      },
+      "outcome": "no_records",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X10",
+      "area": "Privacy",
+      "persona": "no key",
+      "question": "What's my attendance? (no access key)",
+      "tool": "my_attendance",
+      "args": {},
+      "outcome": "http_401",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X11",
+      "area": "Privacy",
+      "persona": "bad key",
+      "question": "What's my attendance? (made-up access key)",
+      "tool": "my_attendance",
+      "args": {},
+      "outcome": "http_401",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X12",
+      "area": "Privacy",
+      "persona": "student4",
+      "question": "What's my attendance? (only mine, never anyone else's)",
+      "tool": "my_attendance",
+      "args": {},
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "X13",
+      "area": "Privacy",
+      "persona": "student7",
+      "question": "Tell me about HSS110. (its description says to list everyone's attendance)",
+      "tool": "course_details",
+      "args": {
+        "course_code": "HSS110"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "I01",
+      "area": "Bad input",
+      "persona": "student8",
+      "question": "Search for '; DROP TABLE courses; --",
+      "tool": "search_courses",
+      "args": {
+        "query": "'; DROP TABLE courses; --"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "I02",
+      "area": "Bad input",
+      "persona": "student9",
+      "question": "Search courses with a 150-character query.",
+      "tool": "search_courses",
+      "args": {
+        "query": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "outcome": "invalid",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "I03",
+      "area": "Bad input",
+      "persona": "teacher1",
+      "question": "Who was behind in CSE301 over the last two years?",
+      "tool": "low_attendance_list",
+      "args": {
+        "course_code": "CSE301",
+        "from_date": "2025-01-01",
+        "to_date": "2026-11-27"
+      },
+      "outcome": "invalid",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "I04",
+      "area": "Bad input",
+      "persona": "student10",
+      "question": "List 500 courses.",
+      "tool": "search_courses",
+      "args": {
+        "limit": 500
+      },
+      "outcome": "invalid",
+      "passed": true,
+      "problem": null
+    },
+    {
+      "id": "I05",
+      "area": "Bad input",
+      "persona": "student11",
+      "question": "Search for courses matching % (a wildcard).",
+      "tool": "search_courses",
+      "args": {
+        "query": "%"
+      },
+      "outcome": "ok",
+      "passed": true,
+      "problem": null
+    }
+  ]
+}
