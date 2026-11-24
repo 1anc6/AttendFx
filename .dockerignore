@@ -1,0 +1,23 @@
+# Keep secrets, local state and dev-only files out of the build context and the image.
+.git
+.github
+.claude
+.env
+.env.*
+!.env.example
+
+# Local virtualenvs, caches and build output (rebuilt inside the image).
+**/.venv
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+frontend/node_modules
+frontend/dist
+
+# Not needed at runtime.
+backend/tests
+docs
+evals
+*.pdf
