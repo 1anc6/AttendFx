@@ -1,6 +1,6 @@
 # Plan: student dashboard
 
-Status: built (phase 7). Steps 7a to 7d are done; section 8 records the decisions taken. Where the build differs from the original plan, this file has been updated to match.
+Status: built and deployed (phase 7). Steps 7a to 7e are done; section 8 records the decisions taken. Where the build differs from the original plan, this file has been updated to match.
 
 ## 1. Why, and what it changes
 
@@ -41,7 +41,7 @@ Recent sessions                       Attendance by fortnight
 
 - The course list is the main part of the page, not the stat tiles. The three tiles are a short summary above it.
 - Each meter shows a tick at the rule, so "how far above or below" reads without numbers.
-- "Room left" wording is still an open question (see section 8).
+- "Room left" wording is neutral (see section 8).
 - Selecting a course opens a sheet with every session in that course, its date and status. A sheet keeps the student on the page and works on phones.
 - Empty and edge states: no term running; enrolled but no sessions marked yet; rule not configured (hide the rule tick and "room left", show percentages only); loading skeleton; load error with retry.
 
@@ -99,5 +99,3 @@ A teacher view ("my courses": each course's attendance, students below the rule)
 2. **"Room left" wording.** Neutral: "3 sessions to spare", "Attend the next 4", "Can't reach 75% this term", "No sessions left this term". Never "you can miss".
 3. **Audit.** Not audited, like the admin dashboards. Assistant calls stay audited as before.
 4. **Teacher view.** Not built. Still a natural follow-up using the same pieces.
-
-Not yet done: step 7e for the demo write-up, which lives on a separate branch (`docs/demo-writeup`); add the student page there once both are merged.
