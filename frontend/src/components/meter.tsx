@@ -9,12 +9,16 @@ export function Meter({
   hint,
   value,
   tone,
+  mark,
   className,
 }: {
   label: string
   hint?: string
   value: number // 0..1
-  tone: Tone
+  /** No tone draws the track only, for "nothing to measure yet". */
+  tone: Tone | null
+  /** A tick on the track, such as the attendance rule (0..1). */
+  mark?: number
   className?: string
 }) {
   const pct = Math.round(Math.min(1, Math.max(0, value)) * 100)
@@ -24,8 +28,18 @@ export function Meter({
         <span className="font-medium text-foreground">{label}</span>
         {hint && <span className="text-muted-foreground">{hint}</span>}
       </div>
-      <div className="h-[3px] overflow-hidden rounded-full bg-track" aria-hidden="true">
-        <div className={cn('h-full rounded-full', BAR[tone])} style={{ width: `${pct}%` }} />
+      <div className="relative" aria-hidden="true">
+        <div className="h-[3px] overflow-hidden rounded-full bg-track">
+          {tone && (
+            <div className={cn('h-full rounded-full', BAR[tone])} style={{ width: `${pct}%` }} />
+          )}
+        </div>
+        {mark !== undefined && (
+          <i
+            className="absolute top-1/2 block h-2.5 w-px -translate-y-1/2 bg-foreground/50"
+            style={{ left: `${Math.min(1, Math.max(0, mark)) * 100}%` }}
+          />
+        )}
       </div>
     </div>
   )

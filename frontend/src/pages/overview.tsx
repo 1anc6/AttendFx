@@ -109,6 +109,11 @@ function OverviewBody({ data }: { data: Overview }) {
                   }))}
                   format={(v) => pct(v)}
                   max={100}
+                  guides={[
+                    { value: 100, label: '100%' },
+                    { value: 50, label: '50%' },
+                    { value: minimum, label: `${minimum}%`, tone: 'bad' },
+                  ]}
                 />
               </CardContent>
             </Card>

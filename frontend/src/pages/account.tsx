@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { Role } from '@/lib/api'
 import { formatDateTime } from '@/lib/format'
+import { homeFor } from '@/lib/home'
 import { useChangePassword, useSession } from '@/lib/session'
 import { cn } from '@/lib/utils'
 
@@ -94,13 +95,13 @@ function PasswordCard({ forced, email }: { forced: boolean; email: string }) {
     change.mutate(
       { current, next },
       {
-        onSuccess: () => {
+        onSuccess: (fresh) => {
           setCurrent('')
           setNext('')
           setConfirm('')
           if (forced) {
             toast.success('Password set. You can use AttendFX now.')
-            navigate('/keys', { replace: true })
+            navigate(homeFor(fresh.user.role), { replace: true })
           } else {
             toast.success('Password changed. Your other devices were signed out.')
           }

@@ -7,6 +7,7 @@ Status: draft v1. Source: *Campus Course and Attendance Helper, Plain-Language G
 **Goals**
 - Let an AI assistant (via MCP) answer course and attendance questions, seeing only what the caller is allowed to see.
 - Give staff and users a small web page for access keys, users, the activity log and usage charts.
+- Give students a read-only page with their own attendance (phase 7, an extension beyond the source guide's admin-only web page).
 - Run entirely on free tiers, with a clear upgrade path (AWS) later.
 
 **Non-goals (v1)**
@@ -240,11 +241,13 @@ docs/                      # this file, ADRs
 | 4 Auth and limits | Key lifecycle, rate limiting, audit log |
 | 5 Admin UI | Sign-in with lockout, keys, users, activity log, charts |
 | 6 Ship | 60-question test, security scans, free-tier deploy, README and demo |
+| 7 Student page | `/me` and `/api/me/attendance`: own attendance per course, room against the rule, recent marks, trend (see STUDENT_DASHBOARD.md) |
 
 ## 10. Decisions and open items
 **Decided**
 - Frontend served from the app container first.
 - Accounts are admin-created or CSV-imported in v1; SSO later.
+- Students get their own web page (phase 7). Its endpoints take no student id and read through RLS as the student; teachers and admins get 403. Viewing it is not audited, like the admin dashboards.
 - Teachers may pass `student_id` to `my_attendance` for students in their own courses; RLS enforces it.
 - Neon over Supabase; psycopg 3 over asyncpg.
 

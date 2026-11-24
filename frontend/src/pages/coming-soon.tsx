@@ -24,8 +24,8 @@ export function NotFoundPage() {
       <div>
         <p className="text-sm text-muted-foreground">404</p>
         <h1 className="text-xl font-semibold">Page not found</h1>
-        <a href="/keys" className="mt-2 inline-block text-sm underline">
-          Go to your keys
+        <a href="/" className="mt-2 inline-block text-sm underline">
+          Go to your start page
         </a>
       </div>
     </div>

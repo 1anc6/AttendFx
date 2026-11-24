@@ -5,7 +5,7 @@ token in the X-CSRF-Token header. Endpoints are plain `def`, so FastAPI runs the
 thread pool, matching the synchronous database layer.
 
 A session signed in with a temporary password may only read /api/me, change its password and
-sign out. /api/people and /api/admin/* are for admins only.
+sign out. /api/people and /api/admin/* are for admins only; /api/me/attendance is for students.
 """
 
 import math
@@ -14,13 +14,14 @@ from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request, Response
+from fastapi import Path as FastAPIPath
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from app.auth import web
 from app.config import get_settings
 from app.ratelimit.limiter import TokenBucketLimiter
-from app.services import admin, keys, people
+from app.services import admin, keys, people, student
 from app.services.common import Denied, UserError
 
 COOKIE = "__Host-afx_session"  # __Host- forces Secure, Path=/ and no Domain
@@ -281,6 +282,19 @@ def set_person_disabled(
     return people.set_disabled(session.identity, person_id, body.disabled)
 
 
+@router.get("/me/attendance")
+def my_attendance_page(session: ReadySession) -> dict[str, Any]:
+    """The signed-in student's own attendance. Takes no student id, on purpose."""
+    return student.my_page(session.identity)
+
+
+@router.get("/me/attendance/{course_code}")
+def my_course_sessions(
+    course_code: Annotated[str, FastAPIPath(max_length=7)], session: ReadySession
+) -> dict[str, Any]:
+    return student.my_course(session.identity, course_code)
+
+
 @router.get("/admin/overview")
 def admin_overview(session: AdminSession) -> dict[str, Any]:
     return admin.overview(session.identity)
@@ -311,6 +325,7 @@ def install(app: FastAPI) -> None:
 
     @app.exception_handler(keys.KeyNotFound)
     @app.exception_handler(people.PersonNotFound)
+    @app.exception_handler(student.CourseNotFound)
     def _not_found(_: Request, exc: UserError) -> JSONResponse:
         return JSONResponse({"detail": str(exc)}, status_code=404)
 

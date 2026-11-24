@@ -152,8 +152,8 @@ function Stats({ data }: { data: KeyList }) {
   const tone = days === null ? null : expiryTone(days)
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      <StatCard label="Active keys">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <StatCard label="Active keys" className="col-span-2 sm:col-span-1">
         <div className="text-2xl font-semibold tracking-tight">
           {data.active} <span className="text-sm font-medium text-muted-foreground">/ {data.max_active}</span>
         </div>
@@ -193,9 +193,17 @@ function Stats({ data }: { data: KeyList }) {
   )
 }
 
-function StatCard({ label, children }: { label: string; children: React.ReactNode }) {
+function StatCard({
+  label,
+  children,
+  className,
+}: {
+  label: string
+  children: React.ReactNode
+  className?: string
+}) {
   return (
-    <Card size="sm">
+    <Card size="sm" className={className}>
       <CardContent>
         <p className="mb-1.5 text-sm text-muted-foreground">{label}</p>
         {children}
@@ -345,10 +353,10 @@ function KeysCard({ keys, onRevoke }: { keys: AccessKey[]; onRevoke: (k: AccessK
                 </div>
                 {statusBadge(k)}
               </div>
-              <div className="text-xs text-muted-foreground">
-                Last used {k.last_used_at ? timeAgo(k.last_used_at) : 'never'}
+              <div className="grid gap-1 text-xs text-muted-foreground">
+                <span>Last used {k.last_used_at ? timeAgo(k.last_used_at) : 'never'}</span>
+                <ExpiryCell k={k} />
               </div>
-              <ExpiryCell k={k} />
               {k.status === 'active' && (
                 <Button variant="secondary" size="sm" className="justify-self-start" onClick={() => onRevoke(k)}>
                   Revoke<span className="sr-only"> {k.name}</span>

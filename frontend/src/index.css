@@ -58,6 +58,9 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+    /* Motion: strong ease-out for anything entering or answering a press, an iOS-like curve for drawers. */
+    --ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* Variant E: monochrome layers, colour only for status. Light first, then dark. */
@@ -163,8 +166,40 @@
   html {
     @apply font-sans antialiased;
     color-scheme: light;
+    scrollbar-color: var(--ring) transparent;
     }
   html.dark {
     color-scheme: dark;
     }
+  ::selection {
+    background: color-mix(in oklch, var(--foreground) 16%, transparent);
+    }
+  /* Browser autofill keeps the app's colours instead of the browser's yellow or white. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--foreground);
+    caret-color: var(--foreground);
+    box-shadow: 0 0 0 1000px var(--card) inset;
+    transition: background-color 9999s ease-out 0s;
+    }
+  /* Numbers in tables line up by digit. */
+  [data-slot="table"] {
+    font-variant-numeric: tabular-nums;
+    }
+}
+
+/* Reduced motion: keep the fades that explain a change, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    --tw-enter-scale: 1;
+    --tw-exit-scale: 1;
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+    --tw-exit-translate-x: 0;
+    --tw-exit-translate-y: 0;
+  }
+  [data-slot="button"]:active {
+    scale: none;
+  }
 }
