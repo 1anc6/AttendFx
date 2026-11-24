@@ -104,6 +104,95 @@ export interface IssuedKey {
   expires_at: string
 }
 
+/* ---------- Admin dashboards ---------- */
+
+export interface BelowMinimum {
+  student_id: string
+  student_name: string
+  course_code: string
+  course_title: string
+  teacher_name: string | null
+  attended: number
+  counted_sessions: number
+  attended_percent: number
+  risk: 'at_risk' | 'watch'
+}
+
+export interface Overview {
+  term: { name: string; starts_on: string; ends_on: string } | null
+  people: PeopleCounts
+  assistant: { days: number; calls: number; people: number; problems: number; active_keys: number }
+  attendance: {
+    courses: number
+    minimum_percent: number
+    high_percent: number
+    overall_percent: number | null
+    funnel: {
+      enrolled: number
+      attended_any: number
+      at_or_above_minimum: number
+      at_or_above_high: number
+    }
+    fortnights: { starts_on: string; records: number; attended_percent: number | null }[]
+    below_minimum: BelowMinimum[]
+    students_below_minimum: number
+    how_percent_is_calculated: string
+  } | null
+}
+
+export type Surface = 'mcp' | 'api' | 'cli'
+
+export interface ActivityEvent {
+  id: number
+  ts: string
+  surface: Surface
+  action: string
+  status: string
+  ok: boolean
+  latency_ms: number | null
+  person: { id: string; name: string; email: string; role: Role } | null
+  key_prefix: string | null
+}
+
+export interface ActivityQuery {
+  q: string
+  surface: Surface | 'all'
+  outcome: 'all' | 'problems'
+  page: number
+}
+
+export interface ActivityPage {
+  events: ActivityEvent[]
+  total: number
+  page: number
+  page_size: number
+  retention_days: number
+}
+
+export type UsageWindow = 7 | 30 | 90
+
+export interface Usage {
+  days: UsageWindow
+  generated_at: string
+  totals: { assistant_calls: number; people: number; problems: number; web_events: number }
+  daily: { day: string; assistant: number; web: number; problems: number }[]
+  tools: {
+    action: string
+    calls: number
+    problems: number
+    median_ms: number | null
+    p95_ms: number | null
+  }[]
+  people: {
+    id: string
+    name: string
+    email: string
+    role: Role
+    calls: number
+    last_call_at: string
+  }[]
+}
+
 export class ApiError extends Error {
   readonly status: number
   constructor(status: number, message: string) {
@@ -176,4 +265,13 @@ export const api = {
     request<{ id: string; disabled: boolean }>('POST', `/api/people/${id}/disabled`, {
       disabled,
     }),
+
+  overview: () => request<Overview>('GET', '/api/admin/overview'),
+  activity: ({ q, surface, outcome, page }: ActivityQuery) => {
+    const params = new URLSearchParams({ outcome, page: String(page) })
+    if (q.trim()) params.set('q', q.trim())
+    if (surface !== 'all') params.set('surface', surface)
+    return request<ActivityPage>('GET', `/api/admin/activity?${params}`)
+  },
+  usage: (days: UsageWindow) => request<Usage>('GET', `/api/admin/usage?days=${days}`),
 }

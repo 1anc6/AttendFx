@@ -5,7 +5,7 @@ token in the X-CSRF-Token header. Endpoints are plain `def`, so FastAPI runs the
 thread pool, matching the synchronous database layer.
 
 A session signed in with a temporary password may only read /api/me, change its password and
-sign out. /api/people is for admins only.
+sign out. /api/people and /api/admin/* are for admins only.
 """
 
 import math
@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 from app.auth import web
 from app.config import get_settings
 from app.ratelimit.limiter import TokenBucketLimiter
-from app.services import keys, people
+from app.services import admin, keys, people
 from app.services.common import Denied, UserError
 
 COOKIE = "__Host-afx_session"  # __Host- forces Secure, Path=/ and no Domain
@@ -279,6 +279,31 @@ def set_person_disabled(
     person_id: UUID, body: DisableBody, session: AdminCsrfSession
 ) -> dict[str, Any]:
     return people.set_disabled(session.identity, person_id, body.disabled)
+
+
+@router.get("/admin/overview")
+def admin_overview(session: AdminSession) -> dict[str, Any]:
+    return admin.overview(session.identity)
+
+
+@router.get("/admin/activity")
+def admin_activity(
+    session: AdminSession,
+    surface: Literal["mcp", "api", "cli"] | None = None,
+    outcome: Literal["all", "problems"] = "all",
+    q: Annotated[str, Query(max_length=100)] = "",
+    page: Annotated[int, Query(ge=1, le=10_000)] = 1,
+) -> dict[str, Any]:
+    return admin.activity(session.identity, surface=surface, outcome=outcome, search=q, page=page)
+
+
+@router.get("/admin/usage")
+def admin_usage(
+    session: AdminSession,
+    days: Annotated[int, Query(ge=1, le=90)] = 30,
+) -> dict[str, Any]:
+    """`days` must be 7, 30 or 90; the service says so if not."""
+    return admin.usage(session.identity, days=days)
 
 
 def install(app: FastAPI) -> None:
