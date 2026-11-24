@@ -84,6 +84,13 @@ export interface BarDatum {
   values: Record<string, number | null>
 }
 
+/** A horizontal reference line, such as a scale step or the attendance rule. */
+export interface Guide {
+  value: number
+  label: string
+  tone?: 'bad'
+}
+
 /**
  * Grouped (or stacked) bars. Every chart has a table view with the same numbers, for screen
  * readers and for anyone who would rather read than eyeball. `format` renders a value.
@@ -96,6 +103,7 @@ export function BarChart({
   max,
   stacked = false,
   height = 176,
+  guides = [],
 }: {
   data: BarDatum[]
   series: Series[]
@@ -104,9 +112,13 @@ export function BarChart({
   max?: number
   stacked?: boolean
   height?: number
+  guides?: Guide[]
 }) {
   const [asTable, setAsTable] = useState(false)
+  const [hovered, setHovered] = useState<number | null>(null)
   const id = useId()
+  const gutter = guides.length ? 'pl-9' : ''
+  const readout = hovered === null ? null : data[hovered]
   const top =
     max ??
     Math.max(
@@ -126,8 +138,18 @@ export function BarChart({
 
   return (
     <div className="grid gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {series.length > 1 ? (
+      <div className="flex min-h-6 flex-wrap items-center justify-between gap-2">
+        {readout && !asTable ? (
+          <p className="text-xs tabular-nums" aria-hidden="true">
+            <span className="text-muted-foreground">{readout.label}</span>
+            {series.map((s) => (
+              <span key={s.key} className="ml-2 font-medium">
+                {series.length > 1 && <span className="font-normal text-muted-foreground">{s.label} </span>}
+                {readout.values[s.key] == null ? '–' : format(readout.values[s.key]!)}
+              </span>
+            ))}
+          </p>
+        ) : series.length > 1 ? (
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground" aria-hidden={!asTable}>
             {series.map((s) => (
               <li key={s.key} className="inline-flex items-center gap-1.5">
@@ -184,15 +206,41 @@ export function BarChart({
           </div>
         ) : (
           <figure role="img" aria-label={summary} className="m-0">
+            <div className={cn('relative', gutter)}>
+              {guides.map((g) => (
+                <div
+                  key={g.label}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0"
+                  style={{ bottom: `${Math.min(1, g.value / top) * 100}%` }}
+                >
+                  <span
+                    className={cn(
+                      'absolute left-0 -translate-y-1/2 text-[10px] leading-none tabular-nums',
+                      g.tone === 'bad' ? 'text-bad' : 'text-muted-foreground',
+                    )}
+                  >
+                    {g.label}
+                  </span>
+                  <i
+                    className={cn(
+                      'absolute right-0 left-9 block border-t',
+                      g.tone === 'bad' ? 'border-dashed border-bad/60' : 'border-border',
+                    )}
+                  />
+                </div>
+              ))}
             <div
-              className="grid items-end gap-[3px] border-b border-border sm:gap-1.5"
+              className="group/plot relative grid items-end gap-[3px] border-b border-border sm:gap-1.5"
               style={{ height, gridTemplateColumns: `repeat(${data.length}, minmax(0, 1fr))` }}
+              onMouseLeave={() => setHovered(null)}
             >
-              {data.map((d) => (
+              {data.map((d, i) => (
                 <div
                   key={d.label}
+                  onMouseEnter={() => setHovered(i)}
                   className={cn(
-                    'flex h-full justify-center',
+                    'flex h-full justify-center transition-opacity duration-150 ease-out group-hover/plot:[&:not(:hover)]:opacity-40',
                     stacked ? 'flex-col-reverse items-stretch' : 'items-end gap-[3px]',
                   )}
                   title={`${d.label}: ${series
@@ -217,9 +265,10 @@ export function BarChart({
                 </div>
               ))}
             </div>
+            </div>
             <div
               aria-hidden="true"
-              className="mt-2 grid gap-[3px] text-center text-[11px] text-muted-foreground sm:gap-1.5"
+              className={cn('mt-2 grid gap-[3px] text-center text-[11px] text-muted-foreground sm:gap-1.5', gutter)}
               style={{ gridTemplateColumns: `repeat(${data.length}, minmax(0, 1fr))` }}
             >
               {data.map((d, i) => (

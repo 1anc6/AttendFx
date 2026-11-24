@@ -1,6 +1,7 @@
 import {
   Activity,
   BarChart3,
+  CalendarCheck,
   ChevronsUpDown,
   KeyRound,
   LayoutGrid,
@@ -35,6 +36,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import type { User } from '@/lib/api'
+import { homeFor } from '@/lib/home'
 import { useSignOut } from '@/lib/session'
 import { setTheme, useTheme } from '@/lib/theme'
 
@@ -49,6 +51,8 @@ const YOU: Item[] = [
   { to: '/keys', label: 'Your access keys', icon: KeyRound },
   { to: '/account', label: 'Account', icon: UserRound },
 ]
+
+const STUDENT_ONLY: Item[] = [{ to: '/me', label: 'Your attendance', icon: CalendarCheck }]
 
 const ADMIN: Item[] = [
   { to: '/admin/overview', label: 'Overview', icon: LayoutGrid },
@@ -100,7 +104,7 @@ export function AppSidebar({ user }: { user: User }) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <NavLink to="/keys">
+              <NavLink to={homeFor(user.role)}>
                 <LogoMark className="size-6!" />
                 <span className="text-[15px] font-semibold tracking-tight">AttendFX</span>
               </NavLink>
@@ -110,7 +114,7 @@ export function AppSidebar({ user }: { user: User }) {
       </SidebarHeader>
 
       <SidebarContent>
-        <NavGroup label="You" items={YOU} />
+        <NavGroup label="You" items={user.role === 'student' ? [...STUDENT_ONLY, ...YOU] : YOU} />
         {user.role === 'admin' && <NavGroup label="Admin" items={ADMIN} />}
       </SidebarContent>
 

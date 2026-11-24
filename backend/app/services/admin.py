@@ -39,7 +39,7 @@ def _iso(value: datetime | None) -> str | None:
 # ----------------------------------------------------------------------------- Overview
 
 
-def _fortnights(rows: list[tuple[int, str, int]], starts_on: date, ends_on: date, today: date):
+def fortnight_series(rows: list[tuple[int, str, int]], starts_on: date, ends_on: date, today: date):
     """Attendance percent per fortnight of the term, up to the one containing today."""
     last = (min(today, ends_on) - starts_on).days // 14
     buckets: dict[int, dict[str, int]] = {}
@@ -136,7 +136,7 @@ def overview(actor: Identity, *, today: date | None = None) -> dict[str, Any]:
                     1 for e in measured if e["attended_percent"] >= HIGH_PERCENT
                 ),
             },
-            "fortnights": _fortnights(fortnight_rows, starts_on, ends_on, today),
+            "fortnights": fortnight_series(fortnight_rows, starts_on, ends_on, today),
             "below_minimum": below,
             "students_below_minimum": len({e["student_id"] for e in below}),
             "how_percent_is_calculated": PERCENT_RULE,
