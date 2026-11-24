@@ -1,11 +1,13 @@
+import { useEffect } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { AppSidebar } from '@/components/app-sidebar'
-import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
+import { homeFor } from '@/lib/home'
 import { useSession } from '@/lib/session'
 
 const TITLES: Record<string, string> = {
+  '/me': 'Your attendance',
   '/connect': 'Connect assistant',
   '/keys': 'Your access keys',
   '/account': 'Account',
@@ -16,9 +18,21 @@ const TITLES: Record<string, string> = {
 }
 
 /** Signed-in shell. Sends signed-out visitors to /sign-in and brings them back afterwards. */
-export function AppLayout({ adminOnly = false }: { adminOnly?: boolean }) {
+export function AppLayout({
+  adminOnly = false,
+  studentOnly = false,
+}: {
+  adminOnly?: boolean
+  studentOnly?: boolean
+}) {
   const { data: me, isPending, isError, refetch } = useSession()
   const location = useLocation()
+  const title = TITLES[location.pathname]
+
+  // Name the browser tab after the page, so history and tabs are easy to tell apart.
+  useEffect(() => {
+    document.title = title ? `${title} · AttendFX` : 'AttendFX'
+  }, [title])
 
   if (isPending) {
     return (
@@ -48,7 +62,8 @@ export function AppLayout({ adminOnly = false }: { adminOnly?: boolean }) {
   if (me.must_change_password && location.pathname !== '/account') {
     return <Navigate to="/account" replace />
   }
-  if (adminOnly && me.user.role !== 'admin') return <Navigate to="/keys" replace />
+  if (adminOnly && me.user.role !== 'admin') return <Navigate to={homeFor(me.user.role)} replace />
+  if (studentOnly && me.user.role !== 'student') return <Navigate to={homeFor(me.user.role)} replace />
 
   return (
     <SidebarProvider>
@@ -56,10 +71,8 @@ export function AppLayout({ adminOnly = false }: { adminOnly?: boolean }) {
       <SidebarInset>
         <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-1 data-[orientation=vertical]:h-4" />
-          <span className="text-sm text-muted-foreground">
-            {TITLES[location.pathname] ?? 'AttendFX'}
-          </span>
+          <span aria-hidden="true" className="mr-1 h-4 w-px bg-border" />
+          <span className="text-sm text-muted-foreground">{title ?? 'AttendFX'}</span>
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 p-4 md:p-6">
           <Outlet />

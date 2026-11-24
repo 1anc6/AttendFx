@@ -140,6 +140,63 @@ export interface Overview {
   } | null
 }
 
+/* ---------- The student's own page ---------- */
+
+export type MarkStatus = 'present' | 'absent' | 'late' | 'excused'
+
+/** Room against the rule for the rest of the term. See backend/app/services/student.py. */
+export type Room =
+  | { kind: 'spare'; sessions: number }
+  | { kind: 'need'; sessions: number }
+  | { kind: 'cannot_reach' }
+  | { kind: 'final' }
+  | { kind: 'no_sessions' }
+
+export interface MyCourse {
+  course_code: string
+  course_title: string
+  teacher_name: string | null
+  present: number
+  absent: number
+  late: number
+  excused: number
+  attended: number
+  counted_sessions: number
+  attended_percent: number | null
+  remaining_sessions: number
+  status: 'ok' | 'watch' | 'at_risk' | 'no_records'
+  room: Room
+}
+
+export interface MyAttendance {
+  term: { name: string; starts_on: string; ends_on: string } | null
+  minimum_percent: number
+  /** False when the college has not set a rule and the 75% default is shown as a guide. */
+  rule_set: boolean
+  overall: {
+    present: number
+    absent: number
+    late: number
+    excused: number
+    attended: number
+    counted_sessions: number
+    attended_percent: number | null
+  } | null
+  courses: MyCourse[]
+  recent: { starts_at: string; course_code: string; course_title: string; status: MarkStatus }[]
+  fortnights: { starts_on: string; records: number; attended_percent: number | null }[]
+  how_percent_is_calculated: string
+}
+
+export interface MyCourseSessions {
+  course_code: string
+  sessions: {
+    starts_at: string
+    ends_at: string
+    status: MarkStatus | 'upcoming' | 'unmarked'
+  }[]
+}
+
 export type Surface = 'mcp' | 'api' | 'cli'
 
 export interface ActivityEvent {
@@ -265,6 +322,10 @@ export const api = {
     request<{ id: string; disabled: boolean }>('POST', `/api/people/${id}/disabled`, {
       disabled,
     }),
+
+  myAttendance: () => request<MyAttendance>('GET', '/api/me/attendance'),
+  myCourse: (code: string) =>
+    request<MyCourseSessions>('GET', `/api/me/attendance/${encodeURIComponent(code)}`),
 
   overview: () => request<Overview>('GET', '/api/admin/overview'),
   activity: ({ q, surface, outcome, page }: ActivityQuery) => {
