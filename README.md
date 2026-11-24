@@ -7,7 +7,7 @@ An MCP server (plus a small admin web page) that lets an AI assistant answer cam
 
 ## Local setup (Windows, PowerShell)
 
-Requirements: Docker Desktop, [uv](https://docs.astral.sh/uv/), Python 3.12, Node 24 (frontend, later).
+Requirements: Docker Desktop, [uv](https://docs.astral.sh/uv/), Python 3.12, Node 24.
 
 ```powershell
 Copy-Item .env.example .env          # dev-only values
@@ -33,6 +33,19 @@ Each person gets a burst of 20 requests, then 60 a minute (`AFX_RATE_LIMIT_BURST
 
 Seeded accounts use `@attendfx.test` emails (`admin@`, `teacher1@`..`teacher5@`, `student01@`..`student40@`) and the password in `AFX_SEED_PASSWORD`. All data is fake.
 
+### Web app
+
+```powershell
+cd frontend
+npm ci
+npm run dev       # http://localhost:5173, proxies /api and /mcp to uvicorn on :8000
+npm run build     # frontend/dist, which uvicorn then serves at http://localhost:8000
+```
+
+Sign in with any seeded account. Five wrong passwords lock an account for 15 minutes.
+
+### Database shell
+
 Run `psql` without installing it locally:
 
 ```powershell
@@ -42,8 +55,8 @@ docker compose exec db psql -U afx_owner -d attendfx
 ## Layout
 
 ```
-backend/    FastAPI app, MCP server (later), migrations, tests
-frontend/   React admin page (phase 5)
+backend/    FastAPI app, MCP server, web API, migrations, tests
+frontend/   React web app (Vite, Tailwind, shadcn/ui)
 evals/      the 60-question test
 infra/      deployment files
 docs/       architecture and decisions
@@ -58,4 +71,6 @@ Done:
 
 - Phase 4: per-person rate limits, failed-key throttling per IP, key lifecycle rules (expiry, 10-key cap, owner/admin revocation), operator CLI, audit for key actions.
 
-Next: the admin UI (phase 5): web sign-in with lockout, then the pages.
+In progress, phase 5 (web app):
+- Done: web sign-in with lockout, cookie sessions with CSRF, `/api` for keys, security headers, the app shell, Your access keys, Connect assistant.
+- Next: Account (change password), admin Overview, People (create accounts, CSV import), Activity, Usage.

@@ -4,6 +4,7 @@ import psycopg
 import pytest
 from fastapi.testclient import TestClient
 
+from app.api import routes as api_routes
 from app.auth.keys import generate_key
 from app.main import app, mcp_asgi
 from app.ratelimit.limiter import TokenBucketLimiter
@@ -26,6 +27,8 @@ def generous_limits():
     effectively unlimited buckets; rate-limit tests install tight ones themselves."""
     mcp_asgi.user_limiter = TokenBucketLimiter(1_000_000, 1_000_000)
     mcp_asgi.failure_limiter = TokenBucketLimiter(1_000_000, 1_000_000)
+    api_routes.limits.per_user = TokenBucketLimiter(1_000_000, 1_000_000)
+    api_routes.limits.login_failures = TokenBucketLimiter(1_000_000, 1_000_000)
     yield
 
 

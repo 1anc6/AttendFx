@@ -69,10 +69,20 @@ Status: draft v1. Source: *Campus Course and Attendance Helper, Plain-Language G
   - Owners revoke their own keys; admins can revoke anyone's. A key you may not see looks exactly like one that does not exist.
   - Create and revoke are audited (`key.create`, `key.revoke`); operator actions use surface `cli`.
 
-**Web sign-in**
-- Email and password, argon2id. Account locks for a cooling-off period after N consecutive failures.
-- Server-side session row in `web_sessions`; the cookie holds only an opaque id. Cookie is HttpOnly, Secure, SameSite=Lax. State-changing requests carry a CSRF token.
+**Web sign-in** (`auth/web.py`, `api/routes.py`)
+- Email and password, argon2id (hashes are upgraded on sign-in if the parameters change). Unknown emails do the same argon2 work and get the same "Email or password is wrong." answer.
+- 5 wrong passwords in a row lock the account for 15 minutes (`AFX_LOGIN_MAX_FAILURES`, `AFX_LOGIN_LOCK_MINUTES`). The count and lock are one atomic `UPDATE`. While locked the password is not checked. A success resets the count. Trade-off: the "locked" message reveals that an account exists, after 5 tries; the per-IP throttle below limits how far that goes.
+- Failed sign-ins per client IP are throttled (burst 60, then 30 a minute, generous for campus NAT), returning 429 with Retry-After.
+- Session: the cookie `__Host-afx_session` holds a random token (HttpOnly, Secure, SameSite=Lax, Path=/, no Domain). `web_sessions.id` stores only its SHA-256, so a copy of the table holds no live sessions. Sessions last 12 hours from sign-in, not sliding (`AFX_SESSION_HOURS`). Sign-out deletes the row.
+- CSRF: each session has its own token, returned by `/api/me` and sign-in. Every state-changing request must send it as `X-CSRF-Token` (constant-time compare). Sign-in itself accepts only a JSON body, which a cross-site HTML form cannot send.
+- `/api` is rate-limited per person with the same budget as MCP. Responses carry `Cache-Control: no-store`.
 - All roles can sign in (everyone manages their own keys). Admin pages are gated by role in the API, not only in the UI.
+- Audit actions: `web.sign_in` (`ok`, `invalid`, `locked`), `web.sign_out`, plus the key actions above with surface `api`.
+
+**Web app hosting and headers** (`web_ui.py`)
+- FastAPI serves `frontend/dist` on the same origin as `/api` and `/mcp`: hashed assets under `/assets`, `index.html` for client-side routes, never for `/api/*` or `/mcp`.
+- Every response gets a strict CSP (`script-src 'self'`, no inline scripts, `frame-ancestors 'none'`), `nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY` and COOP. The no-flash theme script is a separate file for that reason, and fonts are self-hosted.
+- The MCP endpoint rejects browser origins (DNS-rebinding protection), so a web page cannot call `/mcp` with a key, even on the same site.
 
 ### 3.4 Tools and resources
 | Tool | Roles | Notes |
@@ -180,7 +190,7 @@ There is no INSERT, UPDATE or DELETE grant for `afx_app`, so "admins cannot chan
 - **MCP identity**: an ASGI wrapper verifies the bearer key and stores the Identity on the HTTP request scope. An MCP server middleware runs around each MCP message, copies it into a context variable for exactly that message, and resets it afterwards. Tools and resources read only that variable (never headers or arguments), and fail closed when it is empty. A concurrency test interleaves callers to prove identities never cross.
 - **MCP route**: `/mcp` is served by routing to the SDK app with the original scope (no `Mount`), so `POST /mcp` never redirects.
 - **Percent rule**: `attended_percent = (present + late) / (sessions - excused) * 100`. This is an assumption; the guide does not define it.
-- **Frontend**: React, TypeScript, Vite. Tables collapse into cards on small screens, charts come with a table view, full keyboard support.
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS and shadcn/ui (Radix primitives), TanStack Query, React Router. The look is "variant E": monochrome layered surfaces, colour only for status, Geist type, light and dark, picked from a design exploration. Tables collapse into cards on small screens, charts come with a table view, full keyboard support.
 - **Database**: Neon Postgres (plain Postgres, no second auth system). Local dev uses Postgres in Docker Compose.
 - **Tests**: pytest (unit, integration, permission matrix), Vitest, Playwright later.
 - **CI**: GitHub Actions: tests, gitleaks, pip-audit, npm audit, Trivy.

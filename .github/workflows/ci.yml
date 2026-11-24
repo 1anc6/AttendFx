@@ -45,6 +45,23 @@ jobs:
       - run: uv run python -m app.worker seed
       - run: uv run pytest -q
 
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build # type-checks (tsc -b) before bundling
+      - run: npm audit --omit=dev --audit-level=high
+
   security:
     runs-on: ubuntu-latest
     steps:

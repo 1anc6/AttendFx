@@ -24,3 +24,6 @@ Thumbs.db
 
 # Local Claude Code settings
 .claude/settings.local.json
+
+# Local preview servers for the Claude desktop app (machine-specific paths)
+.claude/launch.json

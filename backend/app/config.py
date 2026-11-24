@@ -39,6 +39,15 @@ class Settings(BaseSettings):
     auth_failures_per_minute: float = 30
     auth_failures_burst: int = 60
 
+    # Web sign-in. An account locks for `login_lock_minutes` after `login_max_failures` wrong
+    # passwords in a row. Failed sign-ins per client IP are throttled like failed key checks.
+    login_max_failures: int = 5
+    login_lock_minutes: int = 15
+    login_failures_per_minute: float = 30
+    login_failures_burst: int = 60
+    # A web session lasts this long from sign-in (absolute, not sliding).
+    session_hours: int = 12
+
 
 def get_settings() -> Settings:
     return Settings()  # type: ignore[call-arg]
