@@ -75,7 +75,7 @@ Done:
 In progress, phase 6 (ship):
 - Done: the 60-question test (`evals/`): 60 of 60 pass, run in CI. See [evals/results.md](evals/results.md).
 - Done: security scans in CI: gitleaks (secrets), pip-audit and npm audit (dependencies), and Trivy on the production image and its Dockerfile.
-- Next: demo write-up.
+- Done: demo write-up, see [docs/DEMO.md](docs/DEMO.md).
 
 Phase 7 (student page):
 - Done: Your attendance (`/me`), where students land after signing in. Per-course attendance against the rule, sessions to spare or the run needed to recover, recent marks, a fortnight trend, and every session of a course in a side sheet. Served by `GET /api/me/attendance` and `GET /api/me/attendance/{course}`, which take no student id and read through row-level security as the student. Plan and decisions: [docs/STUDENT_DASHBOARD.md](docs/STUDENT_DASHBOARD.md).
